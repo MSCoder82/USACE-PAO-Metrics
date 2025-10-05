@@ -10,8 +10,8 @@ import { createClient } from '@supabase/supabase-js';
 // 2. Navigate to 'Project Settings' > 'API'.
 // 3. Copy the 'Project URL' and 'Project API keys' (use the 'anon' key).
 // ============================================================================
-const supabaseUrl = process.env.SUPABASE_URL || 'https://ardtcuqisossmgmmvpnc.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyZHRjdXFpc29zc21nbW12cG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDI1OTgsImV4cCI6MjA3NTExODU5OH0.JGJQsV7Ab3oYPYtTd0v2PqMlKiSAjCJt24Dm_wgJ6QE';
+const supabaseUrl = (typeof process !== 'undefined' && process.env.SUPABASE_URL) || 'https://ardtcuqisossmgmmvpnc.supabase.co';
+const supabaseAnonKey = (typeof process !== 'undefined' && process.env.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyZHRjdXFpc29zc21nbW12cG5jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1NDI1OTgsImV4cCI6MjA3NTExODU5OH0.JGJQsV7Ab3oYPYtTd0v2PqMlKiSAjCJt24Dm_wgJ6QE';
 
 export const isSupabaseConfigured = 
     supabaseUrl !== 'https://ardtcuqisossmgmmvpnc.supabase.co' && 
