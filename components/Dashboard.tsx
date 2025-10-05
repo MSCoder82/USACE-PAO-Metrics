@@ -18,7 +18,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns }) => {
     if (selectedCampaignId === 'all') {
       return data;
     }
-    return data.filter(d => d.campaignId === selectedCampaignId);
+    return data.filter(d => d.campaign_id === selectedCampaignId);
   }, [data, selectedCampaignId]);
 
   const getLatestValue = (metric: string) => {

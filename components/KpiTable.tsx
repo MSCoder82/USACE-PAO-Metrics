@@ -61,7 +61,7 @@ const KpiTable: React.FC<KpiTableProps> = ({ data }) => {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-navy-700">
           <thead className="bg-gray-50 dark:bg-navy-700/50">
             <tr>
-              {['date', 'type', 'metric', 'quantity', 'link'].map((key) => (
+              {['date', 'type', 'metric', 'quantity', 'notes', 'link'].map((key) => (
                 <th
                   key={key}
                   scope="col"
@@ -83,6 +83,11 @@ const KpiTable: React.FC<KpiTableProps> = ({ data }) => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-navy-300">{item.type}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.metric}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-navy-300">{item.quantity.toLocaleString()}</td>
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-navy-300">
+                    <span className="block max-w-xs truncate" title={item.notes || ''}>
+                        {item.notes || 'N/A'}
+                    </span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-navy-300">
                     {item.link ? (
                         <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-usace-blue hover:underline" title={item.link}>

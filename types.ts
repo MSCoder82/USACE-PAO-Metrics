@@ -18,7 +18,7 @@ export interface KpiDataPoint {
   metric: string;
   quantity: number;
   notes?: string;
-  campaignId?: number;
+  campaign_id?: number;
   link?: string;
 }
 
@@ -26,8 +26,8 @@ export interface Campaign {
   id: number;
   name: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
 }
 
 export type View = 'dashboard' | 'table' | 'data-entry' | 'plan-builder' | 'campaigns' | 'profile';

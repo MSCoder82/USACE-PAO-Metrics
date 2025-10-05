@@ -25,7 +25,7 @@ const Campaigns: React.FC<CampaignsProps> = ({ campaigns, onAddCampaign }) => {
             showToast('End date cannot be before the start date.', 'error');
             return;
         }
-        onAddCampaign({ name, description, startDate, endDate });
+        onAddCampaign({ name, description, start_date: startDate, end_date: endDate });
         // Reset form
         setName('');
         setDescription('');
@@ -76,7 +76,7 @@ const Campaigns: React.FC<CampaignsProps> = ({ campaigns, onAddCampaign }) => {
                                         <h3 className="text-lg font-semibold text-usace-blue">{campaign.name}</h3>
                                         <p className="text-sm text-gray-600 dark:text-navy-300 mt-1">{campaign.description}</p>
                                         <p className="text-xs text-gray-500 dark:text-navy-400 mt-2">
-                                            <span className="font-medium">Duration:</span> {campaign.startDate} to {campaign.endDate}
+                                            <span className="font-medium">Duration:</span> {campaign.start_date} to {campaign.end_date}
                                         </p>
                                     </li>
                                 ))}

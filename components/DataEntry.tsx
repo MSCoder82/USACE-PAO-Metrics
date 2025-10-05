@@ -32,7 +32,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
 
   const activeCampaigns = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]; // Get current date in "YYYY-MM-DD" format
-    return campaigns.filter(campaign => campaign.endDate >= today);
+    return campaigns.filter(campaign => campaign.end_date >= today);
   }, [campaigns]);
   
   const handleMetricChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -56,7 +56,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
       metric: finalMetric,
       quantity: parseFloat(quantity),
       notes,
-      campaignId: campaignId ? parseInt(campaignId, 10) : undefined,
+      campaign_id: campaignId ? parseInt(campaignId, 10) : undefined,
       link: link || undefined,
     });
     // Reset form
