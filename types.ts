@@ -30,7 +30,16 @@ export interface Campaign {
   end_date: string;
 }
 
-export type View = 'dashboard' | 'table' | 'data-entry' | 'plan-builder' | 'campaigns' | 'profile';
+export interface KpiGoal {
+  id: number;
+  metric: string;
+  target_value: number;
+  start_date: string;
+  end_date: string;
+  campaign_id?: number;
+}
+
+export type View = 'dashboard' | 'table' | 'data-entry' | 'plan-builder' | 'campaigns' | 'profile' | 'goals';
 
 export type Role = 'chief' | 'staff';
 

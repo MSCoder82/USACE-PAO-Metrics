@@ -84,6 +84,15 @@ export const MegaphoneIcon = (props: { className?: string }) => (
     </svg>
 );
 
+export const TrophyIcon = (props: { className?: string }) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9a9.75 9.75 0 001.036 3.865 1.5 1.5 0 002.713 0A9.75 9.75 0 0016.5 18.75zM19.5 15.75c0-1.355-.37-2.64-.99-3.75-1.03-1.85-2.28-3.41-3.76-4.75A1.5 1.5 0 0013.5 6.75h-3a1.5 1.5 0 00-1.25 2.25c-1.48 1.34-2.73 2.9-3.76 4.75-.62 1.11-.99 2.395-.99 3.75h15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75h15" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75V4.5" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5h7.5" />
+    </svg>
+);
+
 export const SunIcon = (props: { className?: string }) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />

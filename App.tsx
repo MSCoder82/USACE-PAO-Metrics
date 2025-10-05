@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { KpiDataPoint, View, Role, Campaign, Profile } from './types';
+import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
 import { NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -8,6 +8,7 @@ import KpiTable from './components/KpiTable';
 import DataEntry from './components/DataEntry';
 import PlanBuilder from './components/PlanBuilder';
 import Campaigns from './components/Campaigns';
+import GoalSetter from './components/GoalSetter';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
 import { supabase } from './lib/supabase';
@@ -19,6 +20,7 @@ import Spinner from './components/Spinner';
 const App: React.FC = () => {
   const [kpiData, setKpiData] = useState<KpiDataPoint[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [goals, setGoals] = useState<KpiGoal[]>([]);
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -44,6 +46,16 @@ const App: React.FC = () => {
       showToast('Error fetching campaigns.', 'error');
     } else {
       setCampaigns(data as Campaign[]);
+    }
+  }, [showToast]);
+
+  const fetchGoals = useCallback(async () => {
+    const { data, error } = await supabase.from('kpi_goals').select('*').order('start_date', { ascending: false });
+    if (error) {
+        console.error('Error fetching KPI goals:', error);
+        showToast('Error fetching KPI goals.', 'error');
+    } else {
+        setGoals(data as KpiGoal[]);
     }
   }, [showToast]);
 
@@ -79,7 +91,7 @@ const App: React.FC = () => {
           }
 
           // Fetch data after session and profile are confirmed
-          await Promise.all([fetchKpiData(), fetchCampaigns()]);
+          await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
 
         } catch (error) {
           const typedError = error as { message?: string; code?: string };
@@ -97,12 +109,13 @@ const App: React.FC = () => {
         setProfile(null);
         setKpiData([]); // Clear data on logout
         setCampaigns([]); // Clear data on logout
+        setGoals([]); // Clear goals on logout
       }
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchKpiData, fetchCampaigns, showToast]);
+  }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
@@ -143,6 +156,24 @@ const App: React.FC = () => {
     }
   }, [session, fetchCampaigns, showToast]);
 
+  const addGoal = useCallback(async (newGoal: Omit<KpiGoal, 'id'>) => {
+    if (!session?.user) {
+        showToast("No user session found. Cannot add goal.", 'error');
+        return;
+    }
+    const { error } = await supabase.from('kpi_goals').insert([
+        { ...newGoal, user_id: session.user.id }
+    ]);
+
+    if (error) {
+        console.error('Error inserting KPI goal:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    } else {
+        await fetchGoals();
+        showToast("Goal created successfully!", 'success');
+    }
+  }, [session, fetchGoals, showToast]);
+
   const onProfileUpdate = (updatedProfileData: Partial<Profile>) => {
     setProfile(prevProfile => {
         if (!prevProfile) return null;
@@ -172,12 +203,12 @@ const App: React.FC = () => {
   const renderActiveView = () => {
     if (!profile || !isViewAllowed(activeView)) {
       // Default to dashboard if current view is not allowed
-      return <Dashboard data={kpiData} campaigns={campaigns} />;
+      return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
     }
 
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard data={kpiData} campaigns={campaigns} />;
+        return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
       case 'table':
         return <KpiTable data={kpiData} />;
       case 'data-entry':
@@ -186,10 +217,12 @@ const App: React.FC = () => {
         return <PlanBuilder />;
       case 'campaigns':
         return <Campaigns campaigns={campaigns} onAddCampaign={addCampaign} />;
+      case 'goals':
+        return <GoalSetter goals={goals} onAddGoal={addGoal} campaigns={campaigns} />;
       case 'profile':
         return <ProfilePage session={session!} profile={profile} onProfileUpdate={onProfileUpdate} />;
       default:
-        return <Dashboard data={kpiData} campaigns={campaigns} />;
+        return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
     }
   };
 

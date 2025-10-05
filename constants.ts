@@ -1,5 +1,5 @@
 import { KpiDataPoint, EntryType, NavItem, Campaign } from './types';
-import { HomeIcon, TableCellsIcon, DocumentPlusIcon, ClipboardDocumentListIcon, MegaphoneIcon } from './components/Icons';
+import { HomeIcon, TableCellsIcon, DocumentPlusIcon, ClipboardDocumentListIcon, MegaphoneIcon, TrophyIcon } from './components/Icons';
 
 export const MOCK_CAMPAIGN_DATA: Campaign[] = [];
 
@@ -11,6 +11,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'table', label: 'Data Explorer', icon: TableCellsIcon, roles: ['chief', 'staff'] },
   { id: 'data-entry', label: 'Add Entry', icon: DocumentPlusIcon, roles: ['chief', 'staff'] },
   { id: 'campaigns', label: 'Campaigns', icon: MegaphoneIcon, roles: ['chief'] },
+  { id: 'goals', label: 'Set Goals', icon: TrophyIcon, roles: ['chief'] },
   { id: 'plan-builder', label: 'Plan Builder', icon: ClipboardDocumentListIcon, roles: ['chief'] },
 ];
 
