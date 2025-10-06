@@ -1,15 +1,12 @@
-import './src/main.tsx';
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import { ThemeProvider } from './contexts/ThemeProvider';
-import { NotificationProvider } from './contexts/NotificationProvider';
-import './index.css';
+import App from '@/App';
+import { ThemeProvider } from '@/contexts/ThemeProvider';
+import { NotificationProvider } from '@/contexts/NotificationProvider';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+  throw new Error('Could not find root element to mount to');
 }
 
 const root = ReactDOM.createRoot(rootElement);
@@ -20,5 +17,6 @@ root.render(
         <App />
       </NotificationProvider>
     </ThemeProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
+
