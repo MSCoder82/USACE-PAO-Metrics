@@ -10,7 +10,10 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Environment overrides
+# Allow committing `.env.local` so that shared Supabase credentials are available.
 *.local
+!.env.local
 
 # Editor directories and files
 .vscode/*
