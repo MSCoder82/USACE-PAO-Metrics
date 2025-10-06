@@ -61,11 +61,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setIsLoading(true);
+    let isMounted = true;
+
+    const handleSession = async (session: Session | null) => {
+      if (!isMounted) {
+        return;
+      }
+
       setSession(session);
+
       if (session) {
         try {
           const { data, error } = await supabase
@@ -73,20 +77,23 @@ const App: React.FC = () => {
             .select('role, avatar_url, teams (id, name)')
             .eq('id', session.user.id)
             .single();
-          
-          if (error && error.code !== 'PGRST116') { 
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (error && error.code !== 'PGRST116') {
             throw error;
           }
-          
+
           if (data) {
             setProfile({
-              role: data.role as Role || 'staff',
+              role: (data.role as Role) || 'staff',
               teamId: data.teams?.id ?? -1,
               teamName: data.teams?.name ?? 'No Team',
               avatarUrl: data.avatar_url,
             });
           } else {
-             // Fallback if profile is not found
             setProfile({ role: 'staff', teamId: -1, teamName: 'Unknown Team' });
           }
 
@@ -94,6 +101,10 @@ const App: React.FC = () => {
           await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
 
         } catch (error) {
+          if (!isMounted) {
+            return;
+          }
+
           const typedError = error as { message?: string; code?: string };
           console.error(
             `Error fetching user profile: ${typedError.message || 'An unknown error occurred'}. Code: ${typedError.code || 'N/A'}`
@@ -107,14 +118,52 @@ const App: React.FC = () => {
         }
       } else {
         setProfile(null);
-        setKpiData([]); // Clear data on logout
-        setCampaigns([]); // Clear data on logout
-        setGoals([]); // Clear goals on logout
+        setKpiData([]);
+        setCampaigns([]);
+        setGoals([]);
       }
-      setIsLoading(false);
+    };
+
+    const initializeSession = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        console.error('Error retrieving auth session:', error);
+      }
+
+      await handleSession(data?.session ?? null);
+
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    };
+
+    initializeSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) {
+        return;
+      }
+
+      setIsLoading(true);
+      await handleSession(session);
+
+      if (isMounted) {
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast]);
 
 
