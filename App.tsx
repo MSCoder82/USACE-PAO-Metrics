@@ -144,7 +144,7 @@ const App: React.FC = () => {
     [fetchKpiData, fetchCampaigns, fetchGoals, showToast]
   );
 
-  const initializeSession = useCallback(async () => {
+  const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
     if (isInitializingRef.current) {
       return;
     }
@@ -152,7 +152,7 @@ const App: React.FC = () => {
     isInitializingRef.current = true;
 
     try {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && options.showLoading !== false) {
         setIsLoading(true);
       }
 
@@ -240,13 +240,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void initializeSession();
+        void initializeSession({ showLoading: false });
       }
     };
 
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
-        void initializeSession();
+        void initializeSession({ showLoading: false });
       }
     };
 
