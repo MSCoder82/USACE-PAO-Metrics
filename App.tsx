@@ -145,20 +145,30 @@ const App: React.FC = () => {
 
     const initializeSession = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.getSession();
 
-      if (!isMounted) {
-        return;
-      }
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Error retrieving auth session:', error);
-      }
+        if (!isMounted) {
+          return;
+        }
 
-      await handleSession(data?.session ?? null);
+        if (error) {
+          console.error('Error retrieving auth session:', error);
+        }
 
-      if (isMounted) {
-        setIsLoading(false);
+        await handleSession(data?.session ?? null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error('Unexpected error initializing authentication session:', error);
+        showToast('Error initializing authentication session. Please refresh and try again.', 'error');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -188,10 +198,20 @@ const App: React.FC = () => {
       }
 
       setIsLoading(true);
-      await handleSession(session ?? null);
 
-      if (isMounted) {
-        setIsLoading(false);
+      try {
+        await handleSession(session ?? null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error('Unexpected error handling auth state change:', error);
+        showToast('Authentication update failed. Please refresh the page.', 'error');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     });
 
