@@ -18,3 +18,10 @@ View your app in AI Studio: https://ai.studio/apps/drive/127lMsmTeRfjILXt4DazqfQ
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Supabase setup
+
+Run the SQL in [`supabase/social-media.sql`](supabase/social-media.sql) inside your Supabase
+project to provision the tables, triggers, and row level security policies that back the
+Social Media workspace. This script enables persistence for both the manual activity log
+and the automated feed connection settings.
