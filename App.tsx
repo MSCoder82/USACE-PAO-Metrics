@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
 import { NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
@@ -9,9 +9,10 @@ import DataEntry from './components/DataEntry';
 import PlanBuilder from './components/PlanBuilder';
 import Campaigns from './components/Campaigns';
 import GoalSetter from './components/GoalSetter';
+import SocialMedia from './components/SocialMedia';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured, supabaseConfigurationError } from './lib/supabase';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
@@ -26,6 +27,7 @@ const App: React.FC = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const supabaseWarningShownRef = useRef(false);
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
 
@@ -76,6 +78,28 @@ const App: React.FC = () => {
   useEffect(() => {
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
     let isMounted = true;
+
+    if (!isSupabaseConfigured) {
+      if (!supabaseWarningShownRef.current) {
+        const warningMessage = supabaseConfigurationError
+          ? 'Supabase credentials are invalid. Running in demo mode without persistence.'
+          : 'Supabase is not configured. Running in demo mode without persistence.';
+        console.warn(warningMessage);
+        showToast(warningMessage, 'warning');
+        supabaseWarningShownRef.current = true;
+      }
+
+      setSession(null);
+      setProfile(null);
+      setKpiData([]);
+      setCampaigns([]);
+      setGoals([]);
+      setIsLoading(false);
+
+      return () => {
+        isMounted = false;
+      };
+    }
 
     const handleSession = async (session: Session | null, options: { fetchData?: boolean } = {}) => {
       if (!isMounted) {
@@ -143,62 +167,86 @@ const App: React.FC = () => {
     };
 
     const initializeSession = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase.auth.getSession();
-
       if (!isMounted) {
         return;
       }
 
-      if (error) {
-        console.error('Error retrieving auth session:', error);
-      }
+      setIsLoading(true);
 
-      await handleSession(data?.session ?? null);
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (isMounted) {
-        setIsLoading(false);
+        if (!isMounted) {
+          return;
+        }
+
+        if (error) {
+          console.error('Error retrieving auth session:', error);
+          showToast('Unable to retrieve authentication session.', 'error');
+        }
+
+        await handleSession(data?.session ?? null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const typedError = error as { message?: string };
+        console.error('Unexpected error retrieving auth session:', typedError?.message ?? error);
+        showToast('Unexpected error retrieving auth session.', 'error');
+        await handleSession(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    initializeSession();
+    void initializeSession();
 
     const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
     const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) {
-        return;
-      }
+    let subscription: { unsubscribe: () => void } | null = null;
 
-      if (silentEvents.includes(event)) {
-        await handleSession(session, { fetchData: false });
-        return;
-      }
+    try {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) {
+          return;
+        }
 
-      if (event === 'INITIAL_SESSION') {
-        return;
-      }
+        if (silentEvents.includes(event)) {
+          await handleSession(session, { fetchData: false });
+          return;
+        }
 
-      if (!handledEvents.includes(event)) {
-        return;
-      }
+        if (event === 'INITIAL_SESSION') {
+          return;
+        }
 
-      setIsLoading(true);
-      await handleSession(session ?? null);
+        if (!handledEvents.includes(event)) {
+          return;
+        }
 
-      if (isMounted) {
-        setIsLoading(false);
-      }
-    });
+        setIsLoading(true);
+        await handleSession(session ?? null);
+
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+      subscription = data.subscription;
+    } catch (error) {
+      console.error('Error subscribing to auth state changes:', error);
+      showToast('Unable to subscribe to authentication updates.', 'error');
+    }
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      subscription?.unsubscribe?.();
     };
-  }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast]);
+  }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseConfigurationError]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
@@ -302,6 +350,8 @@ const App: React.FC = () => {
         return <Campaigns campaigns={campaigns} onAddCampaign={addCampaign} />;
       case 'goals':
         return <GoalSetter goals={goals} onAddGoal={addGoal} campaigns={campaigns} />;
+      case 'social-media':
+        return <SocialMedia role={profile.role} teamId={profile.teamId} userId={session.user.id} />;
       case 'profile':
         return <ProfilePage session={session!} profile={profile} onProfileUpdate={onProfileUpdate} />;
       default:
