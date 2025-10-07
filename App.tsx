@@ -12,7 +12,7 @@ import GoalSetter from './components/GoalSetter';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
 import { supabase } from './lib/supabase';
-import { Session } from '@supabase/supabase-js';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
 import Spinner from './components/Spinner';
@@ -25,8 +25,22 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
+
+  const handleSetActiveView = useCallback((view: View) => {
+    setActiveView(view);
+    setIsSidebarOpen(false);
+  }, []);
+
+  const handleSidebarToggle = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
+
+  const handleSidebarClose = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
 
 
   const fetchKpiData = useCallback(async () => {
@@ -63,64 +77,68 @@ const App: React.FC = () => {
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
     let isMounted = true;
 
-    const handleSession = async (session: Session | null) => {
+    const handleSession = async (session: Session | null, options: { fetchData?: boolean } = {}) => {
       if (!isMounted) {
         return;
       }
 
       setSession(session);
 
-      if (session) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('role, avatar_url, teams (id, name)')
-            .eq('id', session.user.id)
-            .single();
-
-          if (!isMounted) {
-            return;
-          }
-
-          if (error && error.code !== 'PGRST116') {
-            throw error;
-          }
-
-          if (data) {
-            setProfile({
-              role: (data.role as Role) || 'staff',
-              teamId: data.teams?.id ?? -1,
-              teamName: data.teams?.name ?? 'No Team',
-              avatarUrl: data.avatar_url,
-            });
-          } else {
-            setProfile({ role: 'staff', teamId: -1, teamName: 'Unknown Team' });
-          }
-
-          // Fetch data after session and profile are confirmed
-          await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
-
-        } catch (error) {
-          if (!isMounted) {
-            return;
-          }
-
-          const typedError = error as { message?: string; code?: string };
-          console.error(
-            `Error fetching user profile: ${typedError.message || 'An unknown error occurred'}. Code: ${typedError.code || 'N/A'}`
-          );
-          if (typedError.code === '42P01') {
-            showToast('Database error: A required table is missing. Run the setup SQL.', 'error');
-          } else {
-            showToast('Error fetching user profile.', 'error');
-          }
-          setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
-        }
-      } else {
+      if (!session) {
         setProfile(null);
         setKpiData([]);
         setCampaigns([]);
         setGoals([]);
+        return;
+      }
+
+      if (options.fetchData === false) {
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('role, avatar_url, teams (id, name)')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (data) {
+          setProfile({
+            role: (data.role as Role) || 'staff',
+            teamId: data.teams?.id ?? -1,
+            teamName: data.teams?.name ?? 'No Team',
+            avatarUrl: data.avatar_url,
+          });
+        } else {
+          setProfile({ role: 'staff', teamId: -1, teamName: 'Unknown Team' });
+        }
+
+        // Fetch data after session and profile are confirmed
+        await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const typedError = error as { message?: string; code?: string };
+        console.error(
+          `Error fetching user profile: ${typedError.message || 'An unknown error occurred'}. Code: ${typedError.code || 'N/A'}`
+        );
+        if (typedError.code === '42P01') {
+          showToast('Database error: A required table is missing. Run the setup SQL.', 'error');
+        } else {
+          showToast('Error fetching user profile.', 'error');
+        }
+        setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
       }
     };
 
@@ -145,15 +163,31 @@ const App: React.FC = () => {
 
     initializeSession();
 
+    const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
+    const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
+
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) {
         return;
       }
 
+      if (silentEvents.includes(event)) {
+        await handleSession(session, { fetchData: false });
+        return;
+      }
+
+      if (event === 'INITIAL_SESSION') {
+        return;
+      }
+
+      if (!handledEvents.includes(event)) {
+        return;
+      }
+
       setIsLoading(true);
-      await handleSession(session);
+      await handleSession(session ?? null);
 
       if (isMounted) {
         setIsLoading(false);
@@ -181,10 +215,10 @@ const App: React.FC = () => {
       showToast(`Error: ${error.message}`, 'error');
     } else {
       await fetchKpiData(); // Refetch data
-      setActiveView('table'); // Switch to table view
+      handleSetActiveView('table'); // Switch to table view
       showToast("KPI entry successfully added!", 'success');
     }
-  }, [session, fetchKpiData, showToast]);
+  }, [session, fetchKpiData, showToast, handleSetActiveView]);
 
   const addCampaign = useCallback(async (newCampaign: Omit<Campaign, 'id'>) => {
     if (!session?.user) {
@@ -245,9 +279,9 @@ const App: React.FC = () => {
   
   useEffect(() => {
     if (profile && !isViewAllowed(activeView)) {
-      setActiveView('dashboard');
+      handleSetActiveView('dashboard');
     }
-  }, [profile, activeView, isViewAllowed]);
+  }, [profile, activeView, isViewAllowed, handleSetActiveView]);
 
   const renderActiveView = () => {
     if (!profile || !isViewAllowed(activeView)) {
@@ -284,15 +318,31 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-navy-50 dark:bg-navy-950 font-sans text-navy-900 dark:text-navy-100">
-      <Sidebar 
-        navigationItems={visibleNavItems} 
-        activeView={activeView} 
-        setActiveView={setActiveView} 
+    <div className="flex min-h-screen bg-navy-50 font-sans text-navy-900 dark:bg-navy-950 dark:text-navy-100">
+      <Sidebar
+        navigationItems={visibleNavItems}
+        activeView={activeView}
+        setActiveView={handleSetActiveView}
+        isOpen={isSidebarOpen}
+        onClose={handleSidebarClose}
       />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header session={session} profile={profile} theme={theme} toggleTheme={toggleTheme} setActiveView={setActiveView} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 lg:p-8">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={handleSidebarClose}
+          aria-hidden="true"
+        />
+      )}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Header
+          session={session}
+          profile={profile}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          setActiveView={handleSetActiveView}
+          onMenuToggle={handleSidebarToggle}
+        />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
           {renderActiveView()}
         </main>
       </div>
