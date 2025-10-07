@@ -131,12 +131,13 @@ const createDynamicFeedItem = (network: SocialNetwork): MockFeedItem => ({
   hoursAgo: 0,
 });
 
-interface FeedConnection {
-  network: SocialNetwork;
+interface SprinklrConnectionState {
   connected: boolean;
   autoSync: 'Manual' | 'Daily' | 'Weekly';
   lastSynced?: string;
-  apiKey: string;
+  clientId: string;
+  clientSecret: string;
+  environment: 'Production' | 'Sandbox';
   status: 'idle' | 'error' | 'success';
   message?: string;
 }
@@ -155,13 +156,14 @@ type SocialMediaFormState = {
   campaignId: string;
 };
 
-const INITIAL_CONNECTIONS: FeedConnection[] = SOCIAL_NETWORKS.map((network) => ({
-  network,
+const INITIAL_SPRINKLR_CONNECTION: SprinklrConnectionState = {
   connected: false,
   autoSync: 'Manual',
-  apiKey: '',
+  clientId: '',
+  clientSecret: '',
+  environment: 'Production',
   status: 'idle',
-}));
+};
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -173,7 +175,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('en-US', {
 
 const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
   const [entries, setEntries] = useState<SocialMediaEntry[]>([]);
-  const [connections, setConnections] = useState<FeedConnection[]>(INITIAL_CONNECTIONS);
+  const [sprinklrConnection, setSprinklrConnection] = useState<SprinklrConnectionState>(INITIAL_SPRINKLR_CONNECTION);
   const [formState, setFormState] = useState<SocialMediaFormState>({
     network: SOCIAL_NETWORKS[0],
     title: '',
@@ -273,125 +275,95 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
     return importedCount;
   };
 
-  const handleApiKeyChange = (network: SocialNetwork, value: string) => {
-    setConnections((prev) =>
-      prev.map((connection) =>
-        connection.network === network
-          ? {
-              ...connection,
-              apiKey: value,
-              status: 'idle',
-              message: undefined,
-            }
-          : connection,
-      ),
+  const importSprinklrFeed = (options?: { generateNew?: boolean }) => {
+    return SOCIAL_NETWORKS.reduce(
+      (count, network) => count + importFeedEntries(network, options),
+      0,
     );
   };
 
-  const handleConnection = (network: SocialNetwork) => {
-    setConnections((prevConnections) => {
-      const target = prevConnections.find((connection) => connection.network === network);
+  const updateSprinklrAutoSync = (value: SprinklrConnectionState['autoSync']) => {
+    setSprinklrConnection((prev) => ({
+      ...prev,
+      autoSync: value,
+    }));
+  };
 
-      if (!target) {
-        return prevConnections;
-      }
+  const updateSprinklrCredential = (field: 'clientId' | 'clientSecret', value: string) => {
+    setSprinklrConnection((prev) => ({
+      ...prev,
+      [field]: value,
+      status: 'idle',
+      message: undefined,
+    }));
+  };
 
-      if (!target.connected) {
-        if (!target.apiKey.trim()) {
-          return prevConnections.map((connection) =>
-            connection.network === network
-              ? {
-                  ...connection,
-                  status: 'error',
-                  message: 'Enter an API key to connect this feed.',
-                }
-              : connection,
-          );
+  const updateSprinklrEnvironment = (value: SprinklrConnectionState['environment']) => {
+    setSprinklrConnection((prev) => ({
+      ...prev,
+      environment: value,
+    }));
+  };
+
+  const toggleSprinklrConnection = () => {
+    setSprinklrConnection((prev) => {
+      if (!prev.connected) {
+        if (!prev.clientId.trim() || !prev.clientSecret.trim()) {
+          return {
+            ...prev,
+            status: 'error',
+            message: 'Provide both the Sprinklr client ID and client secret to connect.',
+          };
         }
 
-        const importedCount = importFeedEntries(network);
+        const importedCount = importSprinklrFeed();
         const timestamp = new Date().toISOString();
 
-        return prevConnections.map((connection) =>
-          connection.network === network
-            ? {
-                ...connection,
-                connected: true,
-                lastSynced: timestamp,
-                status: 'success',
-                message:
-                  importedCount > 0
-                    ? `Connected successfully. Imported ${importedCount} ${importedCount === 1 ? 'post' : 'posts'}.`
-                    : 'Connected successfully. No new posts available.',
-              }
-            : connection,
-        );
+        return {
+          ...prev,
+          connected: true,
+          lastSynced: timestamp,
+          status: 'success',
+          message:
+            importedCount > 0
+              ? `Connected to Sprinklr successfully. Imported ${importedCount} ${importedCount === 1 ? 'post' : 'posts'}.`
+              : 'Connected to Sprinklr successfully. No new posts available.',
+        };
       }
 
-      return prevConnections.map((connection) =>
-        connection.network === network
-          ? {
-              ...connection,
-              connected: false,
-              lastSynced: undefined,
-              status: 'idle',
-              message: undefined,
-            }
-          : connection,
-      );
+      return {
+        ...prev,
+        connected: false,
+        lastSynced: undefined,
+        status: 'idle',
+        message: undefined,
+      };
     });
   };
 
-  const handleManualSync = (network: SocialNetwork) => {
-    setConnections((prevConnections) => {
-      const target = prevConnections.find((connection) => connection.network === network);
-
-      if (!target) {
-        return prevConnections;
+  const handleSprinklrManualSync = () => {
+    setSprinklrConnection((prev) => {
+      if (!prev.connected) {
+        return {
+          ...prev,
+          status: 'error',
+          message: 'Connect to Sprinklr before syncing.',
+        };
       }
 
-      if (!target.connected) {
-        return prevConnections.map((connection) =>
-          connection.network === network
-            ? {
-                ...connection,
-                status: 'error',
-                message: 'Connect the account before syncing.',
-              }
-            : connection,
-        );
-      }
-
-      const importedCount = importFeedEntries(network, { generateNew: true });
+      const importedCount = importSprinklrFeed({ generateNew: true });
       const timestamp = new Date().toISOString();
 
-      return prevConnections.map((connection) =>
-        connection.network === network
-          ? {
-              ...connection,
-              lastSynced: timestamp,
-              status: 'success',
-              message:
-                importedCount > 0
-                  ? `Synced ${importedCount} new ${importedCount === 1 ? 'post' : 'posts'}.`
-                  : 'Sync complete. No new posts found.',
-            }
-          : connection,
-      );
+      return {
+        ...prev,
+        lastSynced: timestamp,
+        status: 'success',
+        message:
+          importedCount > 0
+            ? `Synced ${importedCount} new ${importedCount === 1 ? 'post' : 'posts'} from Sprinklr.`
+            : 'Sync complete. No new posts found.',
+      };
     });
-  };
-
-  const updateAutoSync = (network: SocialNetwork, value: FeedConnection['autoSync']) => {
-    setConnections((prev) =>
-      prev.map((connection) =>
-        connection.network === network
-          ? {
-              ...connection,
-              autoSync: value,
-            }
-          : connection,
-      ),
-    );
   };
 
   return (
@@ -596,104 +568,122 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
 
         {role === 'chief' ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {connections.map((connection) => (
-              <div
-                key={connection.network}
-                className="rounded-lg border border-gray-200 bg-navy-50/50 p-4 dark:border-navy-700 dark:bg-navy-900/40"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="text-lg font-semibold text-navy-900 dark:text-white">{connection.network}</h4>
-                    <p className="text-sm text-gray-600 dark:text-navy-300">
-                      Securely authenticate the official page to mirror posts in the metrics hub.
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      connection.connected
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                        : 'bg-gray-200 text-gray-700 dark:bg-navy-800 dark:text-navy-200'
+            <div className="rounded-lg border border-gray-200 bg-navy-50/50 p-4 dark:border-navy-700 dark:bg-navy-900/40">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-lg font-semibold text-navy-900 dark:text-white">Sprinklr API</h4>
+                  <p className="text-sm text-gray-600 dark:text-navy-300">
+                    Link your Sprinklr workspace to mirror the approved social content and metrics in one place.
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    sprinklrConnection.connected
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                      : 'bg-gray-200 text-gray-700 dark:bg-navy-800 dark:text-navy-200'
+                  }`}
+                >
+                  {sprinklrConnection.connected ? 'Connected' : 'Offline'}
+                </span>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                  Auto-sync frequency
+                  <select
+                    value={sprinklrConnection.autoSync}
+                    onChange={(event) => updateSprinklrAutoSync(event.target.value as SprinklrConnectionState['autoSync'])}
+                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                  >
+                    <option value="Manual">Manual import</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                  </select>
+                </label>
+
+                <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                  Sprinklr environment
+                  <select
+                    value={sprinklrConnection.environment}
+                    onChange={(event) => updateSprinklrEnvironment(event.target.value as SprinklrConnectionState['environment'])}
+                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                  >
+                    <option value="Production">Production</option>
+                    <option value="Sandbox">Sandbox</option>
+                  </select>
+                </label>
+
+                <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                  Client ID
+                  <input
+                    type="text"
+                    value={sprinklrConnection.clientId}
+                    onChange={(event) => updateSprinklrCredential('clientId', event.target.value)}
+                    placeholder="Enter client ID"
+                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                  />
+                </label>
+
+                <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                  Client secret
+                  <input
+                    type="password"
+                    value={sprinklrConnection.clientSecret}
+                    onChange={(event) => updateSprinklrCredential('clientSecret', event.target.value)}
+                    placeholder="Enter client secret"
+                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                  />
+                  <span className="mt-1 text-[11px] font-normal normal-case text-gray-500 dark:text-navy-300">
+                    Stored locally to simulate OAuth credential storage for this demo environment.
+                  </span>
+                </label>
+
+                {sprinklrConnection.message && (
+                  <div
+                    className={`rounded-md border px-3 py-2 text-xs font-semibold ${
+                      sprinklrConnection.status === 'error'
+                        ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/40 dark:text-red-200'
+                        : 'border-green-200 bg-green-50 text-green-700 dark:border-green-800/40 dark:bg-green-950/40 dark:text-green-200'
                     }`}
                   >
-                    {connection.connected ? 'Connected' : 'Offline'}
-                  </span>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
-                    Auto-sync frequency
-                    <select
-                      value={connection.autoSync}
-                      onChange={(event) => updateAutoSync(connection.network, event.target.value as FeedConnection['autoSync'])}
-                      className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
-                    >
-                      <option value="Manual">Manual import</option>
-                      <option value="Daily">Daily</option>
-                      <option value="Weekly">Weekly</option>
-                    </select>
-                  </label>
-
-                  <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
-                    API key
-                    <input
-                      type="password"
-                      value={connection.apiKey}
-                      onChange={(event) => handleApiKeyChange(connection.network, event.target.value)}
-                      placeholder="Paste API key"
-                      className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
-                    />
-                    <span className="mt-1 text-[11px] font-normal normal-case text-gray-500 dark:text-navy-300">
-                      Stored locally to simulate feed authentication for this demo environment.
-                    </span>
-                  </label>
-
-                  {connection.message && (
-                    <div
-                      className={`rounded-md border px-3 py-2 text-xs font-semibold ${
-                        connection.status === 'error'
-                          ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/40 dark:text-red-200'
-                          : 'border-green-200 bg-green-50 text-green-700 dark:border-green-800/40 dark:bg-green-950/40 dark:text-green-200'
-                      }`}
-                    >
-                      {connection.message}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={() => handleConnection(connection.network)}
-                      className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
-                        connection.connected
-                          ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
-                          : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
-                      }`}
-                    >
-                      {connection.connected ? 'Disconnect feed' : 'Connect account'}
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={!connection.connected}
-                      onClick={() => handleManualSync(connection.network)}
-                      className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
-                        connection.connected
-                          ? 'border border-usace-blue text-usace-blue hover:bg-usace-blue hover:text-white focus:ring-usace-blue dark:border-navy-400 dark:text-navy-200 dark:hover:bg-navy-800'
-                          : 'border border-gray-300 text-gray-400 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-60'
-                      }`}
-                    >
-                      Sync now
-                    </button>
+                    {sprinklrConnection.message}
                   </div>
+                )}
 
-                  {connection.connected && connection.lastSynced && (
-                    <p className="text-xs text-gray-500 dark:text-navy-300">
-                      Last synced {formatDate(connection.lastSynced)}
-                    </p>
-                  )}
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={toggleSprinklrConnection}
+                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
+                      sprinklrConnection.connected
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
+                        : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
+                    }`}
+                  >
+                    {sprinklrConnection.connected ? 'Disconnect Sprinklr' : 'Connect Sprinklr'}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!sprinklrConnection.connected}
+                    onClick={handleSprinklrManualSync}
+                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
+                      sprinklrConnection.connected
+                        ? 'border border-usace-blue text-usace-blue hover:bg-usace-blue hover:text-white focus:ring-usace-blue dark:border-navy-400 dark:text-navy-200 dark:hover:bg-navy-800'
+                        : 'border border-gray-300 text-gray-400 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-60'
+                    }`}
+                  >
+                    Sync now
+                  </button>
                 </div>
+
+                {sprinklrConnection.connected && sprinklrConnection.lastSynced && (
+                  <p className="text-xs text-gray-500 dark:text-navy-300">
+                    Last synced {formatDate(sprinklrConnection.lastSynced)}
+                  </p>
+                )}
               </div>
-            ))}
+            </div>
           </div>
         ) : (
           <div className="rounded-md border border-dashed border-gray-300 p-6 text-center dark:border-navy-600">
