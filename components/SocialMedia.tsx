@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Role } from '../types';
+import { Campaign, Role } from '../types';
 
 const SOCIAL_NETWORKS = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'YouTube', 'Other'] as const;
 
@@ -11,6 +11,7 @@ interface SocialMediaEntry {
   title: string;
   url: string;
   placement: string;
+  campaignId?: number;
   notes?: string;
   createdAt: string;
 }
@@ -24,7 +25,17 @@ interface FeedConnection {
 
 interface SocialMediaProps {
   role: Role;
+  campaigns: Campaign[];
 }
+
+type SocialMediaFormState = {
+  network: SocialNetwork;
+  title: string;
+  url: string;
+  placement: string;
+  notes: string;
+  campaignId: string;
+};
 
 const INITIAL_CONNECTIONS: FeedConnection[] = SOCIAL_NETWORKS.map((network) => ({
   network,
@@ -40,18 +51,29 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
 }).format(new Date(value));
 
-const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
+const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
   const [entries, setEntries] = useState<SocialMediaEntry[]>([]);
   const [connections, setConnections] = useState<FeedConnection[]>(INITIAL_CONNECTIONS);
-  const [formState, setFormState] = useState<Omit<SocialMediaEntry, 'id' | 'createdAt'>>({
+  const [formState, setFormState] = useState<SocialMediaFormState>({
     network: SOCIAL_NETWORKS[0],
     title: '',
     url: '',
     placement: '',
     notes: '',
+    campaignId: '',
   });
 
   const hasEntries = entries.length > 0;
+
+  const availableCampaigns = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const active = campaigns.filter((campaign) => campaign.end_date >= today);
+    return active.length > 0 ? active : campaigns;
+  }, [campaigns]);
+
+  const campaignLookup = useMemo(() => {
+    return new Map(campaigns.map((campaign) => [campaign.id, campaign.name]));
+  }, [campaigns]);
 
   const sortedEntries = useMemo(
     () => [...entries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -64,7 +86,14 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
   };
 
   const resetForm = () => {
-    setFormState({ network: SOCIAL_NETWORKS[0], title: '', url: '', placement: '', notes: '' });
+    setFormState({
+      network: SOCIAL_NETWORKS[0],
+      title: '',
+      url: '',
+      placement: '',
+      notes: '',
+      campaignId: '',
+    });
   };
 
   const handleAddEntry = (event: React.FormEvent<HTMLFormElement>) => {
@@ -78,6 +107,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
       ...formState,
       id: Date.now(),
       createdAt: new Date().toISOString(),
+      campaignId: formState.campaignId ? Number(formState.campaignId) : undefined,
     };
 
     setEntries((prev) => [newEntry, ...prev]);
@@ -179,6 +209,28 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
                 className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
               />
             </label>
+
+            <label className="flex flex-col text-sm font-medium text-navy-800 dark:text-navy-100">
+              Campaign
+              <select
+                name="campaignId"
+                value={formState.campaignId}
+                onChange={handleFormChange}
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+              >
+                <option value="">Not linked</option>
+                {availableCampaigns.map((campaign) => (
+                  <option key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {campaigns.length === 0 && (
+              <p className="md:col-span-2 text-xs text-gray-500 dark:text-navy-300">
+                No campaigns yet—create one from the Campaigns screen to link activity.
+              </p>
+            )}
           </div>
 
           <label className="flex flex-col text-sm font-medium text-navy-800 dark:text-navy-100">
@@ -224,6 +276,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
                     Placement
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Campaign
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
                     Added
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
@@ -249,6 +304,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role }) => {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">{entry.placement || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">
+                      {entry.campaignId ? campaignLookup.get(entry.campaignId) ?? '—' : '—'}
+                    </td>
                     <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">{formatDate(entry.createdAt)}</td>
                     <td className="px-4 py-3 text-sm">
                       <button
