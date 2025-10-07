@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import ThemeToggle from './ThemeToggle';
 import Avatar from './Avatar';
 import { Profile, View } from '../types';
-import { UserCircleIcon } from './Icons';
+import { Bars3Icon, UserCircleIcon } from './Icons';
 
 interface HeaderProps {
     session: Session;
@@ -12,9 +12,10 @@ interface HeaderProps {
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     setActiveView: (view: View) => void;
+    onMenuToggle: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, setActiveView }) => {
+const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, setActiveView, onMenuToggle }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -34,8 +35,16 @@ const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, s
 
   return (
     <header className="flex-shrink-0 bg-white dark:bg-navy-800 border-b border-navy-200 dark:border-navy-700">
-      <div className="flex items-center justify-between p-4 h-16">
+      <div className="flex h-16 items-center justify-between p-4">
         <div className="flex items-center">
+          <button
+            type="button"
+            onClick={onMenuToggle}
+            className="mr-3 inline-flex items-center justify-center rounded-md p-2 text-navy-700 transition hover:bg-navy-100 focus:outline-none focus:ring-2 focus:ring-usace-red focus:ring-offset-2 dark:text-navy-200 dark:hover:bg-navy-700 dark:focus:ring-offset-navy-800 lg:hidden"
+            aria-label="Toggle navigation menu"
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </button>
           <h1 className="text-xl font-semibold text-navy-800 dark:text-white tracking-tight">
             PAO KPI Tracker
           </h1>
