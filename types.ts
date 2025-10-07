@@ -39,7 +39,15 @@ export interface KpiGoal {
   campaign_id?: number;
 }
 
-export type View = 'dashboard' | 'table' | 'data-entry' | 'plan-builder' | 'campaigns' | 'profile' | 'goals';
+export type View =
+  | 'dashboard'
+  | 'table'
+  | 'data-entry'
+  | 'plan-builder'
+  | 'campaigns'
+  | 'profile'
+  | 'goals'
+  | 'social-media';
 
 export type Role = 'chief' | 'staff';
 
