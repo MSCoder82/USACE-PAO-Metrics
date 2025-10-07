@@ -5,6 +5,14 @@ const SOCIAL_NETWORKS = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'YouTub
 
 type SocialNetwork = typeof SOCIAL_NETWORKS[number];
 
+interface MockFeedItem {
+  title: string;
+  url: string;
+  placement: string;
+  notes: string;
+  hoursAgo: number;
+}
+
 interface SocialMediaEntry {
   id: number;
   network: SocialNetwork;
@@ -16,11 +24,121 @@ interface SocialMediaEntry {
   createdAt: string;
 }
 
+const MOCK_FEED_LIBRARY: Record<SocialNetwork, MockFeedItem[]> = {
+  Facebook: [
+    {
+      title: 'Lake shoreline restoration update',
+      url: 'https://facebook.com/usace/posts/shoreline-restoration',
+      placement: 'Regional operations',
+      notes: 'Highlights before/after photos and upcoming milestones.',
+      hoursAgo: 5,
+    },
+    {
+      title: 'STEM outreach day recap',
+      url: 'https://facebook.com/usace/posts/stem-outreach',
+      placement: 'Community engagement',
+      notes: 'Includes partner shout-outs and photo gallery link.',
+      hoursAgo: 20,
+    },
+  ],
+  Twitter: [
+    {
+      title: 'River levels trending downward across the district',
+      url: 'https://twitter.com/usace/status/river-levels-update',
+      placement: 'Water management',
+      notes: 'Thread with charts for stakeholders.',
+      hoursAgo: 2,
+    },
+    {
+      title: 'ICYMI: Public meeting recording now available',
+      url: 'https://twitter.com/usace/status/public-meeting-recap',
+      placement: 'Public affairs',
+      notes: 'Links to the YouTube replay with transcript.',
+      hoursAgo: 16,
+    },
+  ],
+  Instagram: [
+    {
+      title: 'Highlight reel – levee inspection flyover',
+      url: 'https://instagram.com/p/levee-inspection-reel',
+      placement: 'Field operations',
+      notes: 'Short-form reel showcasing the helicopter tour.',
+      hoursAgo: 8,
+    },
+    {
+      title: 'Water safety spotlight: life jacket fit tips',
+      url: 'https://instagram.com/p/water-safety-spotlight',
+      placement: 'Seasonal safety',
+      notes: 'Carousel post with captions for each slide.',
+      hoursAgo: 26,
+    },
+  ],
+  LinkedIn: [
+    {
+      title: 'Hiring surge for coastal resilience engineers',
+      url: 'https://linkedin.com/company/usace/posts/coastal-resilience-hiring',
+      placement: 'Talent acquisition',
+      notes: 'Mentions USAJobs listing and recruiting event.',
+      hoursAgo: 6,
+    },
+    {
+      title: 'Employee spotlight: innovation in lock maintenance',
+      url: 'https://linkedin.com/company/usace/posts/employee-spotlight-lock-maintenance',
+      placement: 'Internal recognition',
+      notes: 'Features quotes from maintenance lead.',
+      hoursAgo: 30,
+    },
+  ],
+  YouTube: [
+    {
+      title: 'Debris removal mission overview',
+      url: 'https://youtube.com/watch?v=usace-debris-removal',
+      placement: 'Emergency operations',
+      notes: '5-minute briefing with captions enabled.',
+      hoursAgo: 12,
+    },
+    {
+      title: 'Virtual tour: visitor center renovations',
+      url: 'https://youtube.com/watch?v=usace-visitor-center-tour',
+      placement: 'Visitor services',
+      notes: 'Includes chapter markers for each gallery.',
+      hoursAgo: 40,
+    },
+  ],
+  Other: [
+    {
+      title: 'Podcast episode: Flood risk management insights',
+      url: 'https://podcasts.example.com/usace/flood-risk-management',
+      placement: 'Thought leadership',
+      notes: 'Cross-posted to multiple podcast platforms.',
+      hoursAgo: 18,
+    },
+  ],
+};
+
+const dynamicFeedFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
+const createDynamicFeedItem = (network: SocialNetwork): MockFeedItem => ({
+  title: `${network} activity update (${dynamicFeedFormatter.format(new Date())})`,
+  url: `https://social.example.com/${network.toLowerCase()}/${Date.now()}`,
+  placement: 'Automated feed import',
+  notes: 'Imported via API key.',
+  hoursAgo: 0,
+});
+
 interface FeedConnection {
   network: SocialNetwork;
   connected: boolean;
   autoSync: 'Manual' | 'Daily' | 'Weekly';
   lastSynced?: string;
+  apiKey: string;
+  status: 'idle' | 'error' | 'success';
+  message?: string;
 }
 
 interface SocialMediaProps {
@@ -41,6 +159,8 @@ const INITIAL_CONNECTIONS: FeedConnection[] = SOCIAL_NETWORKS.map((network) => (
   network,
   connected: false,
   autoSync: 'Manual',
+  apiKey: '',
+  status: 'idle',
 }));
 
 const formatDate = (value: string) => new Intl.DateTimeFormat('en-US', {
@@ -118,18 +238,147 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
     setEntries((prev) => prev.filter((entry) => entry.id !== id));
   };
 
-  const toggleConnection = (network: SocialNetwork) => {
+  const importFeedEntries = (network: SocialNetwork, options?: { generateNew?: boolean }) => {
+    const baseFeed = options?.generateNew ? [createDynamicFeedItem(network)] : MOCK_FEED_LIBRARY[network] ?? [];
+
+    if (baseFeed.length === 0) {
+      return 0;
+    }
+
+    let importedCount = 0;
+
+    setEntries((prevEntries) => {
+      const existingUrls = new Set(prevEntries.map((entry) => entry.url));
+      const itemsToAdd = baseFeed
+        .filter((item) => !existingUrls.has(item.url))
+        .map((item, index) => ({
+          id: Date.now() + index,
+          network,
+          title: item.title,
+          url: item.url,
+          placement: item.placement,
+          notes: item.notes,
+          createdAt: new Date(Date.now() - (item.hoursAgo ?? 0) * 60 * 60 * 1000).toISOString(),
+        }));
+
+      importedCount = itemsToAdd.length;
+
+      if (itemsToAdd.length === 0) {
+        return prevEntries;
+      }
+
+      return [...itemsToAdd, ...prevEntries];
+    });
+
+    return importedCount;
+  };
+
+  const handleApiKeyChange = (network: SocialNetwork, value: string) => {
     setConnections((prev) =>
       prev.map((connection) =>
         connection.network === network
           ? {
               ...connection,
-              connected: !connection.connected,
-              lastSynced: !connection.connected ? new Date().toISOString() : connection.lastSynced,
+              apiKey: value,
+              status: 'idle',
+              message: undefined,
             }
           : connection,
       ),
     );
+  };
+
+  const handleConnection = (network: SocialNetwork) => {
+    setConnections((prevConnections) => {
+      const target = prevConnections.find((connection) => connection.network === network);
+
+      if (!target) {
+        return prevConnections;
+      }
+
+      if (!target.connected) {
+        if (!target.apiKey.trim()) {
+          return prevConnections.map((connection) =>
+            connection.network === network
+              ? {
+                  ...connection,
+                  status: 'error',
+                  message: 'Enter an API key to connect this feed.',
+                }
+              : connection,
+          );
+        }
+
+        const importedCount = importFeedEntries(network);
+        const timestamp = new Date().toISOString();
+
+        return prevConnections.map((connection) =>
+          connection.network === network
+            ? {
+                ...connection,
+                connected: true,
+                lastSynced: timestamp,
+                status: 'success',
+                message:
+                  importedCount > 0
+                    ? `Connected successfully. Imported ${importedCount} ${importedCount === 1 ? 'post' : 'posts'}.`
+                    : 'Connected successfully. No new posts available.',
+              }
+            : connection,
+        );
+      }
+
+      return prevConnections.map((connection) =>
+        connection.network === network
+          ? {
+              ...connection,
+              connected: false,
+              lastSynced: undefined,
+              status: 'idle',
+              message: undefined,
+            }
+          : connection,
+      );
+    });
+  };
+
+  const handleManualSync = (network: SocialNetwork) => {
+    setConnections((prevConnections) => {
+      const target = prevConnections.find((connection) => connection.network === network);
+
+      if (!target) {
+        return prevConnections;
+      }
+
+      if (!target.connected) {
+        return prevConnections.map((connection) =>
+          connection.network === network
+            ? {
+                ...connection,
+                status: 'error',
+                message: 'Connect the account before syncing.',
+              }
+            : connection,
+        );
+      }
+
+      const importedCount = importFeedEntries(network, { generateNew: true });
+      const timestamp = new Date().toISOString();
+
+      return prevConnections.map((connection) =>
+        connection.network === network
+          ? {
+              ...connection,
+              lastSynced: timestamp,
+              status: 'success',
+              message:
+                importedCount > 0
+                  ? `Synced ${importedCount} new ${importedCount === 1 ? 'post' : 'posts'}.`
+                  : 'Sync complete. No new posts found.',
+            }
+          : connection,
+      );
+    });
   };
 
   const updateAutoSync = (network: SocialNetwork, value: FeedConnection['autoSync']) => {
@@ -384,16 +633,58 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                     </select>
                   </label>
 
-                  <button
-                    onClick={() => toggleConnection(connection.network)}
-                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
-                      connection.connected
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
-                        : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
-                    }`}
-                  >
-                    {connection.connected ? 'Disconnect feed' : 'Connect account'}
-                  </button>
+                  <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                    API key
+                    <input
+                      type="password"
+                      value={connection.apiKey}
+                      onChange={(event) => handleApiKeyChange(connection.network, event.target.value)}
+                      placeholder="Paste API key"
+                      className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    />
+                    <span className="mt-1 text-[11px] font-normal normal-case text-gray-500 dark:text-navy-300">
+                      Stored locally to simulate feed authentication for this demo environment.
+                    </span>
+                  </label>
+
+                  {connection.message && (
+                    <div
+                      className={`rounded-md border px-3 py-2 text-xs font-semibold ${
+                        connection.status === 'error'
+                          ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/40 dark:text-red-200'
+                          : 'border-green-200 bg-green-50 text-green-700 dark:border-green-800/40 dark:bg-green-950/40 dark:text-green-200'
+                      }`}
+                    >
+                      {connection.message}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => handleConnection(connection.network)}
+                      className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
+                        connection.connected
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
+                          : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
+                      }`}
+                    >
+                      {connection.connected ? 'Disconnect feed' : 'Connect account'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!connection.connected}
+                      onClick={() => handleManualSync(connection.network)}
+                      className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
+                        connection.connected
+                          ? 'border border-usace-blue text-usace-blue hover:bg-usace-blue hover:text-white focus:ring-usace-blue dark:border-navy-400 dark:text-navy-200 dark:hover:bg-navy-800'
+                          : 'border border-gray-300 text-gray-400 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-60'
+                      }`}
+                    >
+                      Sync now
+                    </button>
+                  </div>
 
                   {connection.connected && connection.lastSynced && (
                     <p className="text-xs text-gray-500 dark:text-navy-300">
