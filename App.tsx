@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
 import { NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
@@ -74,18 +74,18 @@ const App: React.FC = () => {
     }
   }, [showToast]);
 
-  useEffect(() => {
-    // This listener handles the entire auth lifecycle: initial load, login, and logout.
-    let isMounted = true;
+  const isMountedRef = useRef(true);
+  const isInitializingRef = useRef(false);
 
-    const handleSession = async (session: Session | null, options: { fetchData?: boolean } = {}) => {
-      if (!isMounted) {
+  const handleSession = useCallback(
+    async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
+      if (!isMountedRef.current) {
         return;
       }
 
-      setSession(session);
+      setSession(currentSession);
 
-      if (!session) {
+      if (!currentSession) {
         setProfile(null);
         setKpiData([]);
         setCampaigns([]);
@@ -101,10 +101,10 @@ const App: React.FC = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('role, avatar_url, teams (id, name)')
-          .eq('id', session.user.id)
+          .eq('id', currentSession.user.id)
           .single();
 
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -123,10 +123,9 @@ const App: React.FC = () => {
           setProfile({ role: 'staff', teamId: -1, teamName: 'Unknown Team' });
         }
 
-        // Fetch data after session and profile are confirmed
         await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -141,48 +140,63 @@ const App: React.FC = () => {
         }
         setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
       }
-    };
+    },
+    [fetchKpiData, fetchCampaigns, fetchGoals, showToast]
+  );
 
-    const initializeSession = async () => {
-      setIsLoading(true);
+  const initializeSession = useCallback(async () => {
+    if (isInitializingRef.current) {
+      return;
+    }
 
-      try {
-        const { data, error } = await supabase.auth.getSession();
+    isInitializingRef.current = true;
 
-        if (!isMounted) {
-          return;
-        }
-
-        if (error) {
-          console.error('Error retrieving auth session:', error);
-        }
-
-        await handleSession(data?.session ?? null);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        console.error('Unexpected error initializing authentication session:', error);
-        showToast('Error initializing authentication session. Please refresh and try again.', 'error');
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    try {
+      if (isMountedRef.current) {
+        setIsLoading(true);
       }
-    };
 
-    initializeSession();
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      if (error) {
+        console.error('Error retrieving auth session:', error);
+      }
+
+      await handleSession(data?.session ?? null);
+    } catch (error) {
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      console.error('Unexpected error initializing authentication session:', error);
+      showToast('Error initializing authentication session. Please refresh and try again.', 'error');
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
+      isInitializingRef.current = false;
+    }
+  }, [handleSession, showToast]);
+
+  useEffect(() => {
+    // This listener handles the entire auth lifecycle: initial load, login, and logout.
+    isMountedRef.current = true;
+
+    void initializeSession();
 
     const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
     const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) {
-        return;
-      }
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMountedRef.current) {
+          return;
+        }
 
       if (silentEvents.includes(event)) {
         await handleSession(session, { fetchData: false });
@@ -197,29 +211,53 @@ const App: React.FC = () => {
         return;
       }
 
-      setIsLoading(true);
+      if (isMountedRef.current) {
+        setIsLoading(true);
+      }
 
       try {
         await handleSession(session ?? null);
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
         console.error('Unexpected error handling auth state change:', error);
         showToast('Authentication update failed. Please refresh the page.', 'error');
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setIsLoading(false);
         }
       }
     });
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast]);
+  }, [handleSession, initializeSession, showToast]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void initializeSession();
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void initializeSession();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [initializeSession]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
