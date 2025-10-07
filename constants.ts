@@ -1,5 +1,13 @@
 import { KpiDataPoint, EntryType, NavItem, Campaign } from './types';
-import { HomeIcon, TableCellsIcon, DocumentPlusIcon, ClipboardDocumentListIcon, MegaphoneIcon, TrophyIcon } from './components/Icons';
+import {
+  HomeIcon,
+  TableCellsIcon,
+  DocumentPlusIcon,
+  ClipboardDocumentListIcon,
+  MegaphoneIcon,
+  TrophyIcon,
+  GlobeAltIcon,
+} from './components/Icons';
 
 export const MOCK_CAMPAIGN_DATA: Campaign[] = [];
 
@@ -13,6 +21,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'campaigns', label: 'Campaigns', icon: MegaphoneIcon, roles: ['chief'] },
   { id: 'goals', label: 'Set Goals', icon: TrophyIcon, roles: ['chief'] },
   { id: 'plan-builder', label: 'Plan Builder', icon: ClipboardDocumentListIcon, roles: ['chief'] },
+  { id: 'social-media', label: 'Social Media', icon: GlobeAltIcon, roles: ['chief', 'staff'] },
 ];
 
 export const ENTRY_TYPES = Object.values(EntryType);

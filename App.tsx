@@ -9,6 +9,7 @@ import DataEntry from './components/DataEntry';
 import PlanBuilder from './components/PlanBuilder';
 import Campaigns from './components/Campaigns';
 import GoalSetter from './components/GoalSetter';
+import SocialMedia from './components/SocialMedia';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
 import { supabase } from './lib/supabase';
@@ -302,6 +303,8 @@ const App: React.FC = () => {
         return <Campaigns campaigns={campaigns} onAddCampaign={addCampaign} />;
       case 'goals':
         return <GoalSetter goals={goals} onAddGoal={addGoal} campaigns={campaigns} />;
+      case 'social-media':
+        return <SocialMedia role={profile.role} />;
       case 'profile':
         return <ProfilePage session={session!} profile={profile} onProfileUpdate={onProfileUpdate} />;
       default:
