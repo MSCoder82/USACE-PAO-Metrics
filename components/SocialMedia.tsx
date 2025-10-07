@@ -162,6 +162,82 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
     fetchEntries();
     fetchConnections();
   }, [fetchEntries, fetchConnections]);
+import React, { useMemo, useState } from 'react';
+import { Campaign, Role } from '../types';
+
+const SOCIAL_NETWORKS = ['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'YouTube', 'Other'] as const;
+
+type SocialNetwork = typeof SOCIAL_NETWORKS[number];
+
+interface SocialMediaEntry {
+  id: number;
+  network: SocialNetwork;
+  title: string;
+  url: string;
+  placement: string;
+  campaignId?: number;
+  notes?: string;
+  createdAt: string;
+}
+
+interface FeedConnection {
+  network: SocialNetwork;
+  connected: boolean;
+  autoSync: 'Manual' | 'Daily' | 'Weekly';
+  lastSynced?: string;
+}
+
+interface SocialMediaProps {
+  role: Role;
+  campaigns: Campaign[];
+}
+
+type SocialMediaFormState = {
+  network: SocialNetwork;
+  title: string;
+  url: string;
+  placement: string;
+  notes: string;
+  campaignId: string;
+};
+
+const INITIAL_CONNECTIONS: FeedConnection[] = SOCIAL_NETWORKS.map((network) => ({
+  network,
+  connected: false,
+  autoSync: 'Manual',
+}));
+
+const formatDate = (value: string) => new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+}).format(new Date(value));
+
+const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
+  const [entries, setEntries] = useState<SocialMediaEntry[]>([]);
+  const [connections, setConnections] = useState<FeedConnection[]>(INITIAL_CONNECTIONS);
+  const [formState, setFormState] = useState<SocialMediaFormState>({
+    network: SOCIAL_NETWORKS[0],
+    title: '',
+    url: '',
+    placement: '',
+    notes: '',
+    campaignId: '',
+  });
+
+  const hasEntries = entries.length > 0;
+
+  const availableCampaigns = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const active = campaigns.filter((campaign) => campaign.end_date >= today);
+    return active.length > 0 ? active : campaigns;
+  }, [campaigns]);
+
+  const campaignLookup = useMemo(() => {
+    return new Map(campaigns.map((campaign) => [campaign.id, campaign.name]));
+  }, [campaigns]);
 
   const sortedEntries = useMemo(
     () => [...entries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -171,6 +247,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
   const handleFormChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
+  const handleFormChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
@@ -180,6 +257,17 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
   };
 
   const handleAddEntry = async (event: React.FormEvent<HTMLFormElement>) => {
+    setFormState({
+      network: SOCIAL_NETWORKS[0],
+      title: '',
+      url: '',
+      placement: '',
+      notes: '',
+      campaignId: '',
+    });
+  };
+
+  const handleAddEntry = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!formState.title.trim() || !formState.url.trim()) {
@@ -341,6 +429,46 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
 
     await fetchConnections();
     showToast(`${network} feed cadence updated.`, 'success');
+    const newEntry: SocialMediaEntry = {
+      ...formState,
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      campaignId: formState.campaignId ? Number(formState.campaignId) : undefined,
+    };
+
+    setEntries((prev) => [newEntry, ...prev]);
+    resetForm();
+  };
+
+  const handleDeleteEntry = (id: number) => {
+    setEntries((prev) => prev.filter((entry) => entry.id !== id));
+  };
+
+  const toggleConnection = (network: SocialNetwork) => {
+    setConnections((prev) =>
+      prev.map((connection) =>
+        connection.network === network
+          ? {
+              ...connection,
+              connected: !connection.connected,
+              lastSynced: !connection.connected ? new Date().toISOString() : connection.lastSynced,
+            }
+          : connection,
+      ),
+    );
+  };
+
+  const updateAutoSync = (network: SocialNetwork, value: FeedConnection['autoSync']) => {
+    setConnections((prev) =>
+      prev.map((connection) =>
+        connection.network === network
+          ? {
+              ...connection,
+              autoSync: value,
+            }
+          : connection,
+      ),
+    );
   };
 
   return (
@@ -372,6 +500,11 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
                 {SOCIAL_NETWORKS.map((networkOption) => (
                   <option key={networkOption} value={networkOption}>
                     {networkOption}
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+              >
+                {SOCIAL_NETWORKS.map((network) => (
+                  <option key={network} value={network}>
+                    {network}
                   </option>
                 ))}
               </select>
@@ -388,6 +521,8 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
                 required
                 disabled={isSubmitting || !hasTeamContext}
                 className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                required
               />
             </label>
 
@@ -402,11 +537,15 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
                 required
                 disabled={isSubmitting || !hasTeamContext}
                 className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue disabled:cursor-not-allowed disabled:opacity-60"
+                placeholder="https://"
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                required
               />
             </label>
 
             <label className="flex flex-col text-sm font-medium text-navy-800 dark:text-navy-100">
               Placement / campaign
+              Placement or campaign tie-in
               <input
                 type="text"
                 name="placement"
@@ -417,6 +556,32 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
                 className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue disabled:cursor-not-allowed disabled:opacity-60"
               />
             </label>
+                placeholder="Great Lakes Water Safety"
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+              />
+            </label>
+
+            <label className="flex flex-col text-sm font-medium text-navy-800 dark:text-navy-100">
+              Campaign
+              <select
+                name="campaignId"
+                value={formState.campaignId}
+                onChange={handleFormChange}
+                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+              >
+                <option value="">Not linked</option>
+                {availableCampaigns.map((campaign) => (
+                  <option key={campaign.id} value={campaign.id}>
+                    {campaign.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {campaigns.length === 0 && (
+              <p className="md:col-span-2 text-xs text-gray-500 dark:text-navy-300">
+                No campaigns yet—create one from the Campaigns screen to link activity.
+              </p>
+            )}
           </div>
 
           <label className="flex flex-col text-sm font-medium text-navy-800 dark:text-navy-100">
@@ -429,6 +594,8 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
               placeholder="Any additional distribution details or performance notes"
               disabled={isSubmitting || !hasTeamContext}
               className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue disabled:cursor-not-allowed disabled:opacity-60"
+              placeholder="Key talking points, imagery cues, or results."
+              className="mt-1 h-24 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
             />
           </label>
 
@@ -439,6 +606,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
               className="inline-flex items-center rounded-md bg-usace-blue px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-usace-blue-dark focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? 'Saving…' : 'Add to library'}
+              className="inline-flex items-center rounded-md border border-transparent bg-usace-blue px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 dark:focus:ring-offset-navy-800"
+            >
+              Add social link
             </button>
           </div>
         </form>
@@ -510,6 +680,78 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
         ) : (
           <div className="mt-6 rounded-md border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-600 dark:border-navy-700 dark:bg-navy-900/40 dark:text-navy-200">
             No social media entries recorded yet. Add the first one above to kickstart your team library.
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Saved links & placements</h3>
+          <span className="text-sm text-gray-500 dark:text-navy-300">{entries.length} item{entries.length === 1 ? '' : 's'}</span>
+        </div>
+
+        {hasEntries ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-navy-700">
+              <thead>
+                <tr className="bg-navy-50 dark:bg-navy-900">
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Network
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Placement
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Campaign
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Added
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-navy-700">
+                {sortedEntries.map((entry) => (
+                  <tr key={entry.id} className="hover:bg-navy-50/60 dark:hover:bg-navy-900/50">
+                    <td className="px-4 py-3 text-sm font-medium text-navy-900 dark:text-white">{entry.network}</td>
+                    <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">
+                      <div className="flex flex-col">
+                        <a
+                          href={entry.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-semibold text-usace-blue hover:underline"
+                        >
+                          {entry.title}
+                        </a>
+                        {entry.notes && <span className="text-xs text-gray-500 dark:text-navy-300 mt-1">{entry.notes}</span>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">{entry.placement || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">
+                      {entry.campaignId ? campaignLookup.get(entry.campaignId) ?? '—' : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">{formatDate(entry.createdAt)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <button
+                        onClick={() => handleDeleteEntry(entry.id)}
+                        className="rounded-md border border-transparent bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50 dark:focus:ring-offset-navy-800"
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-gray-300 dark:border-navy-600 p-8 text-center">
+            <h4 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">No social links yet</h4>
+            <p className="text-sm text-gray-600 dark:text-navy-300">
+              Start building your library by logging the posts your team has published. You can store links, placements, and notes
+              for future reporting.
+            </p>
           </div>
         )}
       </section>
@@ -596,9 +838,84 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, teamId, userId }) => {
                       ))}
                     </select>
                   </label>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Automated feeds</h3>
+            <p className="text-sm text-gray-600 dark:text-navy-300">
+              Connect official accounts to automatically pull recent activity into the dashboard.
+            </p>
+          </div>
+          <span className="inline-flex items-center rounded-full bg-navy-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-usace-blue dark:bg-navy-900 dark:text-navy-200">
+            Chief access
+          </span>
+        </div>
+
+        {role === 'chief' ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {connections.map((connection) => (
+              <div
+                key={connection.network}
+                className="rounded-lg border border-gray-200 bg-navy-50/50 p-4 dark:border-navy-700 dark:bg-navy-900/40"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="text-lg font-semibold text-navy-900 dark:text-white">{connection.network}</h4>
+                    <p className="text-sm text-gray-600 dark:text-navy-300">
+                      Securely authenticate the official page to mirror posts in the metrics hub.
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      connection.connected
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
+                        : 'bg-gray-200 text-gray-700 dark:bg-navy-800 dark:text-navy-200'
+                    }`}
+                  >
+                    {connection.connected ? 'Connected' : 'Offline'}
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <label className="flex flex-col text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-navy-300">
+                    Auto-sync frequency
+                    <select
+                      value={connection.autoSync}
+                      onChange={(event) => updateAutoSync(connection.network, event.target.value as FeedConnection['autoSync'])}
+                      className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    >
+                      <option value="Manual">Manual import</option>
+                      <option value="Daily">Daily</option>
+                      <option value="Weekly">Weekly</option>
+                    </select>
+                  </label>
+
+                  <button
+                    onClick={() => toggleConnection(connection.network)}
+                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
+                      connection.connected
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
+                        : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
+                    }`}
+                  >
+                    {connection.connected ? 'Disconnect feed' : 'Connect account'}
+                  </button>
+
+                  {connection.connected && connection.lastSynced && (
+                    <p className="text-xs text-gray-500 dark:text-navy-300">
+                      Last synced {formatDate(connection.lastSynced)}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-gray-300 p-6 text-center dark:border-navy-600">
+            <h4 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Chief tools required</h4>
+            <p className="text-sm text-gray-600 dark:text-navy-300">
+              Only chief-level users can authorize automated feeds. Coordinate with your public affairs chief if you would like to
+              enable API-based imports for your team.
+            </p>
           </div>
         )}
       </section>

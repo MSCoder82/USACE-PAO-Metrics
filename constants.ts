@@ -1,4 +1,5 @@
 import { KpiDataPoint, EntryType, NavItem, Campaign, SocialNetwork } from './types';
+import { KpiDataPoint, EntryType, NavItem, Campaign } from './types';
 import {
   HomeIcon,
   TableCellsIcon,
