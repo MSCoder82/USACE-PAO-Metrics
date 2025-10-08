@@ -25,6 +25,8 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ metric, currentValue, targe
   };
 
   return (
+    <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-card dark:shadow-card-dark flex flex-col justify-between">
+      <div>
     <div className="glass-panel flex h-full flex-col gap-4 p-5">
       <div className="space-y-3">
         {campaignName && (

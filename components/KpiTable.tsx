@@ -47,6 +47,8 @@ const KpiTable: React.FC<KpiTableProps> = ({ data }) => {
 
   if (!data || data.length === 0) {
       return (
+          <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
+             <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">KPI Data Explorer</h2>
           <div className="glass-panel space-y-4">
              <h2 className="text-2xl font-semibold text-navy-900 dark:text-white">KPI Data Explorer</h2>
              <EmptyState title="No KPI Data Found" message="Get started by adding a new KPI entry." />
@@ -55,6 +57,8 @@ const KpiTable: React.FC<KpiTableProps> = ({ data }) => {
   }
 
   return (
+    <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
+      <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">KPI Data Explorer</h2>
     <div className="glass-panel space-y-4">
       <div className="flex flex-col gap-2">
         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Insights</span>

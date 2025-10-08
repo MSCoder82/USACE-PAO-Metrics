@@ -175,6 +175,11 @@ const App: React.FC = () => {
     [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseEnabled, isDemoMode]
   );
 
+  const initializeSession = useCallback(
+    async ({ showLoadingIndicator = true }: { showLoadingIndicator?: boolean } = {}) => {
+      if (isInitializingRef.current) {
+        return;
+      }
   const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
     if (!supabaseEnabled || isDemoMode) {
       return;
@@ -183,35 +188,43 @@ const App: React.FC = () => {
       return;
     }
 
-    isInitializingRef.current = true;
+      isInitializingRef.current = true;
 
+      try {
+        if (isMountedRef.current && showLoadingIndicator) {
+          setIsLoading(true);
+        }
     try {
       if (isMountedRef.current && options.showLoading !== false) {
         setIsLoading(true);
       }
 
-      const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
 
-      if (!isMountedRef.current) {
-        return;
-      }
+        if (!isMountedRef.current) {
+          return;
+        }
 
-      if (error) {
-        console.error('Error retrieving auth session:', error);
-      }
+        if (error) {
+          console.error('Error retrieving auth session:', error);
+        }
 
-      await handleSession(data?.session ?? null);
-    } catch (error) {
-      if (!isMountedRef.current) {
-        return;
-      }
+        await handleSession(data?.session ?? null);
+      } catch (error) {
+        if (!isMountedRef.current) {
+          return;
+        }
 
-      console.error('Unexpected error initializing authentication session:', error);
-      showToast('Error initializing authentication session. Please refresh and try again.', 'error');
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
+        console.error('Unexpected error initializing authentication session:', error);
+        showToast('Error initializing authentication session. Please refresh and try again.', 'error');
+      } finally {
+        if (isMountedRef.current && showLoadingIndicator) {
+          setIsLoading(false);
+        }
+        isInitializingRef.current = false;
       }
+    },
+    [handleSession, showToast],
       isInitializingRef.current = false;
     }
   }, [handleSession, showToast, supabaseEnabled, isDemoMode]);
@@ -304,12 +317,14 @@ const App: React.FC = () => {
     }
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        void initializeSession({ showLoadingIndicator: false });
         void initializeSession({ showLoading: false });
       }
     };
 
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
+        void initializeSession({ showLoadingIndicator: false });
         void initializeSession({ showLoading: false });
       }
     };

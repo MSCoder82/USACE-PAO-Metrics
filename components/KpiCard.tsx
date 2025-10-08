@@ -11,6 +11,10 @@ interface KpiCardProps {
 
 const KpiCard: React.FC<KpiCardProps> = ({ title, value, unit, icon: Icon }) => {
   return (
+    <div className="relative overflow-hidden rounded-lg bg-white dark:bg-navy-800 px-4 pb-12 pt-5 shadow-card dark:shadow-card-dark sm:px-6 sm:pt-6">
+      <dt>
+        <div className="absolute rounded-md bg-usace-blue p-3">
+          <Icon className="h-6 w-6 text-white" aria-hidden="true" />
     <div className="glass-panel flex flex-col gap-5 p-4 sm:gap-6 sm:p-5 lg:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>

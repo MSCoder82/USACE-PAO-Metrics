@@ -70,6 +70,8 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
   };
 
   return (
+    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-3xl mx-auto">
+      <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Add New KPI Entry</h2>
     <div className="glass-panel max-w-3xl space-y-6 md:p-10">
       <div>
         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Data capture</span>

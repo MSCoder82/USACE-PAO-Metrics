@@ -58,6 +58,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ session, profile, onProfileUp
   };
 
   return (
+    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">My Profile</h2>
+      <div className="flex flex-col items-center space-y-4">
     <div className="glass-panel mx-auto max-w-2xl space-y-8 md:p-10">
       <div className="flex flex-col items-center gap-4 text-center">
         <Avatar url={profile.avatarUrl} name={session.user.email} size={128} />
