@@ -25,25 +25,25 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ metric, currentValue, targe
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 flex flex-col justify-between">
-      <div>
+    <div className="glass-panel flex h-full flex-col gap-4 p-5">
+      <div className="space-y-3">
         {campaignName && (
-          <span className="text-xs font-bold text-usace-red uppercase tracking-wider block mb-1">{campaignName}</span>
+          <span className="soft-badge">{campaignName}</span>
         )}
-        <div className="flex justify-between items-start mb-2">
-            <h4 className="font-semibold text-navy-800 dark:text-white truncate pr-2" title={metric}>{metric}</h4>
-            <span className="text-xs font-medium text-gray-500 dark:text-navy-400 whitespace-nowrap flex-shrink-0">{daysRemaining()}</span>
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-lg font-semibold text-navy-900 dark:text-white" title={metric}>{metric}</h4>
+          <span className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">{daysRemaining()}</span>
         </div>
-        <div className="flex justify-between text-sm mb-1">
-            <span className="font-medium text-gray-700 dark:text-navy-300">{currentValue.toLocaleString()} / {targetValue.toLocaleString()}</span>
-            <span className="font-bold text-usace-blue">{progressPercentage.toFixed(0)}%</span>
+        <div className="flex items-baseline justify-between text-sm">
+          <span className="font-medium text-navy-600 dark:text-navy-100">{currentValue.toLocaleString()} / {targetValue.toLocaleString()}</span>
+          <span className="text-lg font-semibold text-usace-blue">{progressPercentage.toFixed(0)}%</span>
         </div>
       </div>
-      <div className="w-full bg-gray-200 dark:bg-navy-700 rounded-full h-2.5">
-        <div 
-          className="bg-usace-blue h-2.5 rounded-full transition-all duration-500" 
+      <div className="relative h-2.5 overflow-hidden rounded-full bg-white/60 dark:bg-white/10">
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-usace-red to-usace-blue transition-all duration-500"
           style={{ width: `${progressPercentage}%` }}
-        ></div>
+        />
       </div>
     </div>
   );

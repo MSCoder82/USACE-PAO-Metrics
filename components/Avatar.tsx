@@ -32,24 +32,27 @@ const Avatar: React.FC<AvatarProps> = ({ url, name, size }) => {
   
   return (
     <div
-      className="rounded-full bg-navy-200 dark:bg-navy-600 flex items-center justify-center overflow-hidden"
+      className="relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-usace-blue/70 via-white/80 to-usace-red/70 p-[2px] shadow-lg shadow-navy-900/20 dark:via-white/20"
       style={{ height: size, width: size }}
     >
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt="Avatar"
-          className="object-cover"
-          style={{ height: size, width: size }}
-        />
-      ) : (
-        <span
-          className="font-bold text-usace-blue dark:text-navy-100"
-          style={{ fontSize: size / 2.2 }}
-        >
-          {getInitials(name)}
-        </span>
-      )}
+      <div
+        className="flex h-full w-full items-center justify-center rounded-full bg-white/90 text-navy-900 backdrop-blur dark:bg-navy-900/80 dark:text-white"
+      >
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt="Avatar"
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : (
+          <span
+            className="font-semibold"
+            style={{ fontSize: size / 2.2 }}
+          >
+            {getInitials(name)}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

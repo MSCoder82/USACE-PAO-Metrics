@@ -32,11 +32,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ session, profile, onProfileUp
       if (uploadError) {
         throw uploadError;
       }
-      
+
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
       if (!publicUrl) {
-          throw new Error("Could not get public URL for the uploaded avatar.");
+        throw new Error('Could not get public URL for the uploaded avatar.');
       }
 
       const { error: updateError } = await supabase
@@ -58,13 +58,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ session, profile, onProfileUp
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">My Profile</h2>
-      <div className="flex flex-col items-center space-y-4">
+    <div className="glass-panel mx-auto max-w-2xl space-y-8 md:p-10">
+      <div className="flex flex-col items-center gap-4 text-center">
         <Avatar url={profile.avatarUrl} name={session.user.email} size={128} />
+        <div className="space-y-2">
+          <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">{session.user.email}</h2>
+          <p className="text-sm text-navy-600 dark:text-navy-200">{profile.teamName}</p>
+        </div>
         <div>
-          <label htmlFor="avatar-upload" className="cursor-pointer inline-flex justify-center rounded-md border border-transparent bg-usace-blue py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 dark:focus:ring-offset-navy-800 transition-colors">
-            {uploading ? 'Uploading...' : 'Upload new avatar'}
+          <label htmlFor="avatar-upload" className="surface-button">
+            {uploading ? 'Uploading…' : 'Upload new avatar'}
           </label>
           <input
             id="avatar-upload"
@@ -76,20 +79,21 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ session, profile, onProfileUp
           />
         </div>
       </div>
-      <div className="mt-8 border-t border-gray-200 dark:border-navy-700 pt-6">
-        <dl className="space-y-4">
-            <div className="sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt className="text-sm font-medium text-gray-500 dark:text-navy-400">Email Address</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">{session.user.email}</dd>
-            </div>
-             <div className="sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt className="text-sm font-medium text-gray-500 dark:text-navy-400">Team</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2">{profile.teamName}</dd>
-            </div>
-             <div className="sm:grid sm:grid-cols-3 sm:gap-4">
-                <dt className="text-sm font-medium text-gray-500 dark:text-navy-400">Role</dt>
-                <dd className="mt-1 text-sm text-gray-900 dark:text-white sm:mt-0 sm:col-span-2 capitalize">{profile.role}</dd>
-            </div>
+      <div className="space-y-4 rounded-2xl border border-white/30 bg-white/40 p-6 text-left dark:border-white/10 dark:bg-white/5">
+        <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Profile details</h3>
+        <dl className="space-y-4 text-sm">
+          <div className="flex flex-col gap-1">
+            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Email address</dt>
+            <dd className="text-navy-800 dark:text-white">{session.user.email}</dd>
+          </div>
+          <div className="flex flex-col gap-1">
+            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Team</dt>
+            <dd className="text-navy-800 dark:text-white">{profile.teamName}</dd>
+          </div>
+          <div className="flex flex-col gap-1">
+            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Role</dt>
+            <dd className="capitalize text-navy-800 dark:text-white">{profile.role}</dd>
+          </div>
         </dl>
       </div>
     </div>

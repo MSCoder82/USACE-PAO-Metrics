@@ -22,44 +22,60 @@ const Sidebar: React.FC<SidebarProps> = ({ navigationItems, activeView, setActiv
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex w-64 transform flex-col bg-usace-blue text-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0 lg:flex-shrink-0 lg:shadow-none ${
+      className={`fixed inset-y-0 left-0 z-40 flex w-72 transform flex-col bg-gradient-to-br from-navy-950/95 via-navy-900/95 to-usace-blue/90 text-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.75)] backdrop-blur-2xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0 lg:flex-shrink-0 lg:shadow-none ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}
     >
-      <div className="relative flex h-16 items-center justify-center border-b border-navy-600 p-4">
-        <div className="flex items-center space-x-3">
-          <UsaceLogoIcon className="h-8 w-8 text-usace-red" />
-          <span className="font-bold text-lg tracking-wider">USACE</span>
+      <div className="relative flex h-20 items-center justify-center border-b border-white/10 px-6">
+        <div className="flex items-center gap-3">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-usace-red">
+            <UsaceLogoIcon className="h-7 w-7" />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">USACE</p>
+            <span className="text-lg font-semibold tracking-tight">PAO Metrics</span>
+          </div>
         </div>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-navy-100 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white lg:hidden"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white/70 transition hover:-translate-y-0.5 hover:bg-white/20 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white lg:hidden"
             aria-label="Close navigation"
           >
             <XMarkIcon className="h-5 w-5" />
           </button>
         )}
       </div>
-      <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
-        {navigationItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => handleNavigate(item.id)}
-            className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 ${
-              activeView === item.id
-                ? 'bg-usace-red text-white'
-                : 'text-navy-100 hover:bg-navy-700 hover:text-white'
-            }`}
-          >
-            <item.icon className="mr-3 h-5 w-5" />
-            {item.label}
-          </button>
-        ))}
+      <nav className="flex-1 space-y-2 overflow-y-auto px-5 py-8 subtle-scrollbar">
+        {navigationItems.map((item) => {
+          const isActive = activeView === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleNavigate(item.id)}
+              className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+                isActive
+                  ? 'bg-white text-navy-900 shadow-lg shadow-black/20'
+                  : 'bg-white/5 text-white/70 hover:-translate-y-0.5 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl border ${
+                  isActive
+                    ? 'border-transparent bg-gradient-to-br from-usace-red to-usace-blue text-white'
+                    : 'border-white/10 bg-white/10 text-white/70 group-hover:text-white'
+                }`}
+              >
+                <item.icon className="h-5 w-5" />
+              </span>
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
-      <div className="border-t border-navy-600 p-4">
-        <p className="text-center text-xs text-navy-300">&copy; 2024 USACE PAO</p>
+      <div className="border-t border-white/10 p-6">
+        <p className="text-center text-[11px] uppercase tracking-[0.4em] text-white/60">&copy; 2024 USACE PAO</p>
       </div>
     </aside>
   );
