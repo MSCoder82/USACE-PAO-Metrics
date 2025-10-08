@@ -96,7 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
           </select>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <KpiCard title="Media Pickups (Latest)" value={mediaPickupsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="pickups" icon={PresentationChartBarIcon} />
         <KpiCard title="Social Engagement (Latest)" value={engagementLatest?.quantity.toLocaleString() ?? 'N/A'} unit="%" icon={ChartPieIcon}/>
         <KpiCard title="News Releases (Total)" value={pressReleasesTotal.toLocaleString() ?? 'N/A'} unit="releases" icon={GlobeAltIcon}/>
@@ -112,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
             </span>
             <h3 className="text-2xl font-semibold text-navy-900 dark:text-white">Active Goals</h3>
           </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {activeGoals.map(goal => {
               const currentValue = getGoalProgress(goal);
               const campaignName = goal.campaign_id

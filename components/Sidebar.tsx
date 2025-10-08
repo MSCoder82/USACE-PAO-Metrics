@@ -14,8 +14,30 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ navigationItems, activeView, setActiveView, isOpen = true, onClose }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
 
-  const isExpanded = isOpen || isHovered;
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const handleMediaChange = (event: MediaQueryListEvent) => {
+      setIsDesktop(event.matches);
+    };
+
+    setIsDesktop(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleMediaChange);
+      return () => mediaQuery.removeEventListener('change', handleMediaChange);
+    }
+
+    mediaQuery.addListener(handleMediaChange);
+    return () => mediaQuery.removeListener(handleMediaChange);
+  }, []);
+
+  const isExpanded = isDesktop || isOpen || isHovered;
 
   useEffect(() => {
     if (!isOpen) {
@@ -35,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigationItems, activeView, setActiv
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={`group/sidebar fixed inset-y-0 left-0 z-40 flex w-72 transform flex-col bg-gradient-to-br from-navy-950/95 via-navy-900/95 to-usace-blue/90 text-white shadow-[0_24px_60px_-30px_rgba(15,23,42,0.75)] backdrop-blur-2xl transition-all duration-300 ease-in-out lg:static lg:z-auto lg:flex-shrink-0 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        isDesktop || isOpen ? 'translate-x-0' : '-translate-x-full'
       } ${isExpanded ? 'lg:w-72 lg:shadow-[0_24px_60px_-30px_rgba(15,23,42,0.75)]' : 'lg:w-20 lg:shadow-[0_18px_45px_-28px_rgba(15,23,42,0.7)]'}`}
     >
       <div className={`relative flex h-20 items-center justify-center border-b border-white/10 px-6 transition-all duration-200 ${
