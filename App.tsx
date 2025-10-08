@@ -18,6 +18,9 @@ import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
 import Spinner from './components/Spinner';
 
+const DESKTOP_BREAKPOINT = 1024;
+const isDesktopViewport = () => typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT;
+
 const FALLBACK_PROFILE: Profile = {
   role: 'chief',
   teamId: 101,
@@ -34,13 +37,16 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(() => (!supabaseEnabled ? { ...FALLBACK_PROFILE } : null));
   const [isLoading, setIsLoading] = useState(supabaseEnabled);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => isDesktopViewport());
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
 
   const handleSetActiveView = useCallback((view: View) => {
     setActiveView(view);
-    setIsSidebarOpen(false);
+    if (!isDesktopViewport()) {
+      setIsSidebarOpen(false);
+    }
   }, []);
 
   const handleSidebarToggle = useCallback(() => {
@@ -48,7 +54,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleSidebarClose = useCallback(() => {
-    setIsSidebarOpen(false);
+    if (!isDesktopViewport()) {
+      setIsSidebarOpen(false);
+    }
   }, []);
 
 
@@ -451,6 +459,27 @@ const App: React.FC = () => {
       handleSetActiveView('dashboard');
     }
   }, [profile, activeView, isViewAllowed, handleSetActiveView]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleResize = () => {
+      if (isDesktopViewport()) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const renderActiveView = () => {
     if (!profile || !isViewAllowed(activeView)) {
