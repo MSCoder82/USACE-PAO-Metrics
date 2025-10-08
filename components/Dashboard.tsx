@@ -73,24 +73,29 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
 
 
   return (
-    <div>
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <h2 className="text-3xl font-bold tracking-tight text-navy-900 dark:text-white">PAO Dashboard</h2>
-            <div className="flex items-center space-x-2">
-                <label htmlFor="campaign-filter" className="text-sm font-medium text-gray-700 dark:text-navy-300">Filter by Campaign:</label>
-                <select 
-                    id="campaign-filter"
-                    value={selectedCampaignId}
-                    onChange={(e) => setSelectedCampaignId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className="block w-full max-w-xs pl-3 pr-10 py-2 text-base border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 dark:text-white focus:outline-none focus:ring-usace-blue focus:border-usace-blue sm:text-sm rounded-md"
-                >
-                    <option value="all">All Campaigns</option>
-                    {campaigns.map(campaign => (
-                        <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
-                    ))}
-                </select>
-            </div>
+    <div className="space-y-8">
+      <div className="glass-panel flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-usace-blue/80 dark:text-navy-200/80">Mission Control</p>
+          <h2 className="text-3xl font-bold tracking-tight text-navy-900 dark:text-white">PAO Performance Dashboard</h2>
         </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="campaign-filter" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">
+            Filter campaign
+          </label>
+          <select
+            id="campaign-filter"
+            value={selectedCampaignId}
+            onChange={(e) => setSelectedCampaignId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            className="input-modern w-48"
+          >
+            <option value="all">All Campaigns</option>
+            {campaigns.map(campaign => (
+              <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Media Pickups (Latest)" value={mediaPickupsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="pickups" icon={PresentationChartBarIcon} />
         <KpiCard title="Social Engagement (Latest)" value={engagementLatest?.quantity.toLocaleString() ?? 'N/A'} unit="%" icon={ChartPieIcon}/>
@@ -98,41 +103,43 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
         {/* Fix: Used the more appropriate VideoCameraIcon for the Video Views card. */}
         <KpiCard title="Video Views (Latest)" value={videoViewsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="views" icon={VideoCameraIcon}/>
       </div>
-      
+
       {activeGoals.length > 0 && (
-          <div className="mt-8">
-              <div className="flex items-center mb-4">
-                  <TrophyIcon className="h-6 w-6 text-usace-blue mr-3" />
-                  <h3 className="text-2xl font-bold tracking-tight text-navy-900 dark:text-white">Active Goals</h3>
-              </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {activeGoals.map(goal => {
-                      const currentValue = getGoalProgress(goal);
-                      const campaignName = goal.campaign_id
-                        ? campaigns.find(c => c.id === goal.campaign_id)?.name
-                        : undefined;
-                      return (
-                          <GoalProgress 
-                              key={goal.id}
-                              metric={goal.metric}
-                              currentValue={currentValue}
-                              targetValue={goal.target_value}
-                              endDate={goal.end_date}
-                              campaignName={campaignName}
-                          />
-                      );
-                  })}
-              </div>
+        <div className="glass-panel space-y-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-usace-blue/15 text-usace-blue">
+              <TrophyIcon className="h-5 w-5" />
+            </span>
+            <h3 className="text-2xl font-semibold text-navy-900 dark:text-white">Active Goals</h3>
           </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {activeGoals.map(goal => {
+              const currentValue = getGoalProgress(goal);
+              const campaignName = goal.campaign_id
+                ? campaigns.find(c => c.id === goal.campaign_id)?.name
+                : undefined;
+              return (
+                <GoalProgress
+                  key={goal.id}
+                  metric={goal.metric}
+                  currentValue={currentValue}
+                  targetValue={goal.target_value}
+                  endDate={goal.end_date}
+                  campaignName={campaignName}
+                />
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
-          <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Monthly Media Pickups</h3>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="glass-panel">
+          <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Monthly Media Pickups</h3>
           <KpiBarChart data={filteredData} />
         </div>
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
-           <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Entries by Type</h3>
+        <div className="glass-panel">
+           <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Entries by Type</h3>
           <KpiPieChart data={filteredData} />
         </div>
       </div>

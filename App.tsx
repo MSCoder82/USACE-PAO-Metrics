@@ -444,7 +444,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-navy-50 font-sans text-navy-900 dark:bg-navy-950 dark:text-navy-100">
+    <div className="relative flex min-h-screen w-full overflow-hidden text-navy-900 transition-colors duration-300 ease-out dark:text-navy-100">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/70 via-white/20 to-navy-100/20 dark:from-navy-950 dark:via-navy-950/70 dark:to-navy-900" />
       <Sidebar
         navigationItems={visibleNavItems}
         activeView={activeView}
@@ -454,7 +455,7 @@ const App: React.FC = () => {
       />
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-navy-950/60 backdrop-blur-sm lg:hidden"
           onClick={handleSidebarClose}
           aria-hidden="true"
         />
@@ -469,8 +470,10 @@ const App: React.FC = () => {
           onMenuToggle={handleSidebarToggle}
           isSupabaseEnabled={supabaseEnabled}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
-          {renderActiveView()}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-8 sm:px-6 lg:px-12 subtle-scrollbar">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+            {renderActiveView()}
+          </div>
         </main>
       </div>
     </div>

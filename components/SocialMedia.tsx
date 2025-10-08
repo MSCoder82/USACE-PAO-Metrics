@@ -368,9 +368,12 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Social Content Library</h2>
-        <p className="text-gray-600 dark:text-navy-300 mb-6">
+      <section className="glass-panel space-y-6">
+        <div className="space-y-3">
+          <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Library</span>
+          <h2 className="text-2xl font-semibold text-navy-900 dark:text-white">Social content library</h2>
+        </div>
+        <p className="text-sm text-navy-600 dark:text-navy-200">
           Capture the links and placements for the social media content you create across platforms. These entries are private to
           your team and make it easier to reference successful posts later.
         </p>
@@ -383,7 +386,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                 name="network"
                 value={formState.network}
                 onChange={handleFormChange}
-                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                className="input-modern"
               >
                 {SOCIAL_NETWORKS.map((network) => (
                   <option key={network} value={network}>
@@ -401,7 +404,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                 value={formState.title}
                 onChange={handleFormChange}
                 placeholder="Spring flood preparedness video"
-                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                className="input-modern"
                 required
               />
             </label>
@@ -414,7 +417,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                 value={formState.url}
                 onChange={handleFormChange}
                 placeholder="https://"
-                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                className="input-modern"
                 required
               />
             </label>
@@ -427,7 +430,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                 value={formState.placement}
                 onChange={handleFormChange}
                 placeholder="Great Lakes Water Safety"
-                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                className="input-modern"
               />
             </label>
 
@@ -437,7 +440,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                 name="campaignId"
                 value={formState.campaignId}
                 onChange={handleFormChange}
-                className="mt-1 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+                className="input-modern"
               >
                 <option value="">Not linked</option>
                 {availableCampaigns.map((campaign) => (
@@ -461,30 +464,27 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
               value={formState.notes}
               onChange={handleFormChange}
               placeholder="Key talking points, imagery cues, or results."
-              className="mt-1 h-24 rounded-md border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 px-3 py-2 text-gray-900 dark:text-white focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue"
+              className="textarea-modern h-32"
             />
           </label>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="inline-flex items-center rounded-md border border-transparent bg-usace-blue px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 dark:focus:ring-offset-navy-800"
-            >
+            <button type="submit" className="surface-button">
               Add social link
             </button>
           </div>
         </form>
       </section>
 
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
-        <div className="flex items-center justify-between mb-4">
+      <section className="glass-panel space-y-6">
+        <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Saved links & placements</h3>
-          <span className="text-sm text-gray-500 dark:text-navy-300">{entries.length} item{entries.length === 1 ? '' : 's'}</span>
+          <span className="text-sm text-navy-600 dark:text-navy-200">{entries.length} item{entries.length === 1 ? '' : 's'}</span>
         </div>
 
         {hasEntries ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-navy-700">
+            <table className="min-w-full divide-y divide-white/40 dark:divide-white/10">
               <thead>
                 <tr className="bg-navy-50 dark:bg-navy-900">
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-navy-200">
@@ -507,9 +507,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-navy-700">
+              <tbody className="divide-y divide-white/30 dark:divide-white/10">
                 {sortedEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-navy-50/60 dark:hover:bg-navy-900/50">
+                  <tr key={entry.id} className="transition hover:bg-usace-blue/10 dark:hover:bg-white/10">
                     <td className="px-4 py-3 text-sm font-medium text-navy-900 dark:text-white">{entry.network}</td>
                     <td className="px-4 py-3 text-sm text-navy-800 dark:text-navy-100">
                       <div className="flex flex-col">
@@ -593,7 +593,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                   <select
                     value={sprinklrConnection.autoSync}
                     onChange={(event) => updateSprinklrAutoSync(event.target.value as SprinklrConnectionState['autoSync'])}
-                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    className="input-modern"
                   >
                     <option value="Manual">Manual import</option>
                     <option value="Daily">Daily</option>
@@ -606,7 +606,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                   <select
                     value={sprinklrConnection.environment}
                     onChange={(event) => updateSprinklrEnvironment(event.target.value as SprinklrConnectionState['environment'])}
-                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    className="input-modern"
                   >
                     <option value="Production">Production</option>
                     <option value="Sandbox">Sandbox</option>
@@ -620,7 +620,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                     value={sprinklrConnection.clientId}
                     onChange={(event) => updateSprinklrCredential('clientId', event.target.value)}
                     placeholder="Enter client ID"
-                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    className="input-modern"
                   />
                 </label>
 
@@ -631,7 +631,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                     value={sprinklrConnection.clientSecret}
                     onChange={(event) => updateSprinklrCredential('clientSecret', event.target.value)}
                     placeholder="Enter client secret"
-                    className="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-usace-blue focus:outline-none focus:ring-2 focus:ring-usace-blue dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                    className="input-modern"
                   />
                   <span className="mt-1 text-[11px] font-normal normal-case text-gray-500 dark:text-navy-300">
                     Stored locally to simulate OAuth credential storage for this demo environment.
@@ -654,11 +654,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                   <button
                     type="button"
                     onClick={toggleSprinklrConnection}
-                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
-                      sprinklrConnection.connected
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500'
-                        : 'bg-usace-blue text-white hover:bg-navy-800 focus:ring-usace-blue'
-                    }`}
+                    className={`surface-button secondary ${sprinklrConnection.connected ? 'text-usace-red ring-usace-red/50 hover:bg-usace-red/10' : ''}`}
                   >
                     {sprinklrConnection.connected ? 'Disconnect Sprinklr' : 'Connect Sprinklr'}
                   </button>
@@ -667,18 +663,14 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
                     type="button"
                     disabled={!sprinklrConnection.connected}
                     onClick={handleSprinklrManualSync}
-                    className={`w-full rounded-md px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-900 ${
-                      sprinklrConnection.connected
-                        ? 'border border-usace-blue text-usace-blue hover:bg-usace-blue hover:text-white focus:ring-usace-blue dark:border-navy-400 dark:text-navy-200 dark:hover:bg-navy-800'
-                        : 'border border-gray-300 text-gray-400 focus:ring-gray-300 disabled:cursor-not-allowed disabled:opacity-60'
-                    }`}
+                    className={`surface-button secondary ${sprinklrConnection.connected ? '' : 'cursor-not-allowed opacity-50'}`}
                   >
                     Sync now
                   </button>
                 </div>
 
                 {sprinklrConnection.connected && sprinklrConnection.lastSynced && (
-                  <p className="text-xs text-gray-500 dark:text-navy-300">
+                  <p className="text-xs text-navy-600 dark:text-navy-200">
                     Last synced {formatDate(sprinklrConnection.lastSynced)}
                   </p>
                 )}
@@ -686,9 +678,9 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
             </div>
           </div>
         ) : (
-          <div className="rounded-md border border-dashed border-gray-300 p-6 text-center dark:border-navy-600">
+          <div className="rounded-3xl border-2 border-dashed border-white/40 p-6 text-center backdrop-blur dark:border-white/10">
             <h4 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">Chief tools required</h4>
-            <p className="text-sm text-gray-600 dark:text-navy-300">
+            <p className="text-sm text-navy-600 dark:text-navy-200">
               Only chief-level users can authorize automated feeds. Coordinate with your public affairs chief if you would like to
               enable API-based imports for your team.
             </p>
