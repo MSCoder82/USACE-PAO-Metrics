@@ -23,6 +23,10 @@ module.exports = {
           950: '#1d2635',
         },
       },
+      boxShadow: {
+        card: '0 12px 28px -16px rgba(15, 23, 42, 0.35), 0 6px 18px -12px rgba(15, 23, 42, 0.2)',
+        'card-dark': '0 16px 36px -18px rgba(2, 6, 23, 0.75), 0 6px 18px -12px rgba(2, 6, 23, 0.5)',
+      },
     },
   },
   plugins: [],

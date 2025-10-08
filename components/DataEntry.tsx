@@ -70,7 +70,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 max-w-3xl mx-auto">
+    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Add New KPI Entry</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

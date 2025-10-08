@@ -11,7 +11,7 @@ interface KpiCardProps {
 
 const KpiCard: React.FC<KpiCardProps> = ({ title, value, unit, icon: Icon }) => {
   return (
-    <div className="relative overflow-hidden rounded-lg bg-white dark:bg-navy-800 px-4 pb-12 pt-5 shadow-md dark:shadow-2xl dark:shadow-navy-950/50 sm:px-6 sm:pt-6">
+    <div className="relative overflow-hidden rounded-lg bg-white dark:bg-navy-800 px-4 pb-12 pt-5 shadow-card dark:shadow-card-dark sm:px-6 sm:pt-6">
       <dt>
         <div className="absolute rounded-md bg-usace-blue p-3">
           <Icon className="h-6 w-6 text-white" aria-hidden="true" />

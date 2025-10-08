@@ -368,7 +368,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Social Content Library</h2>
         <p className="text-gray-600 dark:text-navy-300 mb-6">
           Capture the links and placements for the social media content you create across platforms. These entries are private to
@@ -476,7 +476,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
         </form>
       </section>
 
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Saved links & placements</h3>
           <span className="text-sm text-gray-500 dark:text-navy-300">{entries.length} item{entries.length === 1 ? '' : 's'}</span>
@@ -553,7 +553,7 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
         )}
       </section>
 
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Automated feeds</h3>

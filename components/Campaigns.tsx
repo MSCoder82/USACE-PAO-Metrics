@@ -36,7 +36,7 @@ const Campaigns: React.FC<CampaignsProps> = ({ campaigns, onAddCampaign }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
                     <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Create Campaign</h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
@@ -66,7 +66,7 @@ const Campaigns: React.FC<CampaignsProps> = ({ campaigns, onAddCampaign }) => {
                 </div>
             </div>
             <div className="lg:col-span-2">
-                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
                     <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Existing Campaigns</h2>
                      {campaigns.length > 0 ? (
                         <div className="overflow-x-auto">

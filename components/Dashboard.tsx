@@ -127,11 +127,11 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
       )}
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
           <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Monthly Media Pickups</h3>
           <KpiBarChart data={filteredData} />
         </div>
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
            <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Entries by Type</h3>
           <KpiPieChart data={filteredData} />
         </div>

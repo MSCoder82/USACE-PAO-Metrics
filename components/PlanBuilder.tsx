@@ -124,7 +124,7 @@ const PlanBuilder: React.FC = () => {
     
     if (isLoading) {
         return (
-            <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 h-full flex flex-col items-center justify-center">
+            <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col items-center justify-center">
                 <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Generating Your Plan...</h2>
                 <p className="text-gray-600 dark:text-navy-300 mb-6">The AI is synthesizing your inputs into a professional document.</p>
                 <div className="flex items-center space-x-2">
@@ -138,7 +138,7 @@ const PlanBuilder: React.FC = () => {
 
     if (currentStep === 12) {
         return (
-             <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 h-full flex flex-col">
+             <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col">
                 <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">Your Communication Plan</h2>
                 <div className="flex-1 overflow-y-auto mb-4 p-4 bg-navy-50 dark:bg-navy-900 rounded-md border border-navy-200 dark:border-navy-700">
                     <RenderMarkdown content={generatedPlan} />
@@ -157,7 +157,7 @@ const PlanBuilder: React.FC = () => {
 
     if (currentStep >= 1) {
         return (
-            <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 h-full flex flex-col">
+            <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col">
                 <ProgressIndicator />
                 <div className="flex-1 flex flex-col">
                     <h3 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">{STEP_PROMPTS[currentStep].title}</h3>
@@ -189,7 +189,7 @@ const PlanBuilder: React.FC = () => {
     }
 
     return (
-         <div className="bg-white dark:bg-navy-800 p-8 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 h-full flex flex-col items-center justify-center text-center">
+         <div className="bg-white dark:bg-navy-800 p-8 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col items-center justify-center text-center">
             <SparklesIcon className="w-16 h-16 text-usace-blue mb-4" />
             <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">AI Communication Plan Builder</h2>
             <p className="max-w-xl text-gray-600 dark:text-navy-300 mb-8">

@@ -65,7 +65,7 @@ const GoalSetter: React.FC<GoalSetterProps> = ({ goals, onAddGoal, campaigns }) 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1">
-                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
                     <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Set New KPI Goal</h2>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
@@ -104,7 +104,7 @@ const GoalSetter: React.FC<GoalSetterProps> = ({ goals, onAddGoal, campaigns }) 
                 </div>
             </div>
             <div className="lg:col-span-2">
-                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50">
+                <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
                     <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Existing Goals</h2>
                      {sortedGoals.length > 0 ? (
                         <div className="overflow-y-auto max-h-[60vh]">
