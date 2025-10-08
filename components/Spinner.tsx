@@ -2,10 +2,10 @@ import React from 'react';
 
 const Spinner: React.FC = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-navy-50 dark:bg-navy-950">
+    <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-white via-white/70 to-navy-100/40 dark:from-navy-950 dark:via-navy-950/80 dark:to-navy-900">
         <div className="relative flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-navy-200 dark:border-navy-700 rounded-full"></div>
-            <div className="w-16 h-16 border-t-4 border-usace-blue rounded-full animate-spin absolute"></div>
+            <div className="h-20 w-20 rounded-full border-4 border-white/60 backdrop-blur dark:border-white/10"></div>
+            <div className="absolute h-20 w-20 animate-spin rounded-full border-4 border-transparent border-t-usace-blue"></div>
         </div>
     </div>
   );
