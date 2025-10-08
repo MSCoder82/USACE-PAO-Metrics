@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
-import { NAVIGATION_ITEMS } from './constants';
+import { MOCK_CAMPAIGN_DATA, MOCK_KPI_DATA, MOCK_KPI_GOALS, NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -12,20 +12,27 @@ import GoalSetter from './components/GoalSetter';
 import SocialMedia from './components/SocialMedia';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured, supabaseConfigurationError } from './lib/supabase';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
 import Spinner from './components/Spinner';
 
+const FALLBACK_PROFILE: Profile = {
+  role: 'chief',
+  teamId: 101,
+  teamName: 'Public Affairs Office',
+};
+
 const App: React.FC = () => {
-  const [kpiData, setKpiData] = useState<KpiDataPoint[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [goals, setGoals] = useState<KpiGoal[]>([]);
+  const supabaseEnabled = isSupabaseConfigured && supabaseConfigurationError === null;
+  const [kpiData, setKpiData] = useState<KpiDataPoint[]>(() => (supabaseEnabled ? [] : [...MOCK_KPI_DATA]));
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => (supabaseEnabled ? [] : [...MOCK_CAMPAIGN_DATA]));
+  const [goals, setGoals] = useState<KpiGoal[]>(() => (supabaseEnabled ? [] : [...MOCK_KPI_GOALS]));
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(() => (supabaseEnabled ? null : { ...FALLBACK_PROFILE }));
+  const [isLoading, setIsLoading] = useState(supabaseEnabled);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
@@ -45,6 +52,10 @@ const App: React.FC = () => {
 
 
   const fetchKpiData = useCallback(async () => {
+    if (!supabaseEnabled) {
+      setKpiData([...MOCK_KPI_DATA]);
+      return;
+    }
     const { data, error } = await supabase.from('kpi_data').select('*').order('date', { ascending: false });
     if (error) {
       console.error('Error fetching KPI data:', error);
@@ -52,9 +63,13 @@ const App: React.FC = () => {
     } else {
       setKpiData(data as KpiDataPoint[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled]);
 
   const fetchCampaigns = useCallback(async () => {
+    if (!supabaseEnabled) {
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      return;
+    }
     const { data, error } = await supabase.from('campaigns').select('*').order('start_date', { ascending: false });
     if (error) {
       console.error('Error fetching campaigns:', error);
@@ -62,9 +77,13 @@ const App: React.FC = () => {
     } else {
       setCampaigns(data as Campaign[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled]);
 
   const fetchGoals = useCallback(async () => {
+    if (!supabaseEnabled) {
+      setGoals([...MOCK_KPI_GOALS]);
+      return;
+    }
     const { data, error } = await supabase.from('kpi_goals').select('*').order('start_date', { ascending: false });
     if (error) {
         console.error('Error fetching KPI goals:', error);
@@ -72,13 +91,16 @@ const App: React.FC = () => {
     } else {
         setGoals(data as KpiGoal[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled]);
 
   const isMountedRef = useRef(true);
   const isInitializingRef = useRef(false);
 
   const handleSession = useCallback(
     async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
+      if (!supabaseEnabled) {
+        return;
+      }
       if (!isMountedRef.current) {
         return;
       }
@@ -141,10 +163,13 @@ const App: React.FC = () => {
         setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
       }
     },
-    [fetchKpiData, fetchCampaigns, fetchGoals, showToast]
+    [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseEnabled]
   );
 
   const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
+    if (!supabaseEnabled) {
+      return;
+    }
     if (isInitializingRef.current) {
       return;
     }
@@ -180,9 +205,14 @@ const App: React.FC = () => {
       }
       isInitializingRef.current = false;
     }
-  }, [handleSession, showToast]);
+  }, [handleSession, showToast, supabaseEnabled]);
 
   useEffect(() => {
+    if (!supabaseEnabled) {
+      setProfile({ ...FALLBACK_PROFILE });
+      setIsLoading(false);
+      return;
+    }
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
     isMountedRef.current = true;
 
@@ -235,9 +265,12 @@ const App: React.FC = () => {
       isMountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, [handleSession, initializeSession, showToast]);
+  }, [handleSession, initializeSession, showToast, supabaseEnabled]);
 
   useEffect(() => {
+    if (!supabaseEnabled) {
+      return;
+    }
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         void initializeSession({ showLoading: false });
@@ -257,10 +290,19 @@ const App: React.FC = () => {
       window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [initializeSession]);
+  }, [initializeSession, supabaseEnabled]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
+    if (!supabaseEnabled) {
+      setKpiData((prevData) => {
+        const nextId = prevData.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [{ id: nextId, ...newDataPoint }, ...prevData];
+      });
+      handleSetActiveView('table');
+      showToast('KPI entry successfully added!', 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add KPI data.", 'error');
         return;
@@ -277,9 +319,17 @@ const App: React.FC = () => {
       handleSetActiveView('table'); // Switch to table view
       showToast("KPI entry successfully added!", 'success');
     }
-  }, [session, fetchKpiData, showToast, handleSetActiveView]);
+  }, [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled]);
 
   const addCampaign = useCallback(async (newCampaign: Omit<Campaign, 'id'>) => {
+    if (!supabaseEnabled) {
+      setCampaigns((prevCampaigns) => {
+        const nextId = prevCampaigns.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [...prevCampaigns, { id: nextId, ...newCampaign }];
+      });
+      showToast("Campaign created successfully!", 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add campaign.", 'error');
         return;
@@ -296,9 +346,17 @@ const App: React.FC = () => {
         await fetchCampaigns(); // Refetch campaigns
         showToast("Campaign created successfully!", 'success');
     }
-  }, [session, fetchCampaigns, showToast]);
+  }, [session, fetchCampaigns, showToast, supabaseEnabled]);
 
   const addGoal = useCallback(async (newGoal: Omit<KpiGoal, 'id'>) => {
+    if (!supabaseEnabled) {
+      setGoals((prevGoals) => {
+        const nextId = prevGoals.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [...prevGoals, { id: nextId, ...newGoal }];
+      });
+      showToast("Goal created successfully!", 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add goal.", 'error');
         return;
@@ -314,7 +372,7 @@ const App: React.FC = () => {
         await fetchGoals();
         showToast("Goal created successfully!", 'success');
     }
-  }, [session, fetchGoals, showToast]);
+  }, [session, fetchGoals, showToast, supabaseEnabled]);
 
   const onProfileUpdate = (updatedProfileData: Partial<Profile>) => {
     setProfile(prevProfile => {
@@ -364,7 +422,10 @@ const App: React.FC = () => {
       case 'social-media':
         return <SocialMedia role={profile.role} campaigns={campaigns} />;
       case 'profile':
-        return <ProfilePage session={session!} profile={profile} onProfileUpdate={onProfileUpdate} />;
+        if (!session) {
+          return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
+        }
+        return <ProfilePage session={session} profile={profile} onProfileUpdate={onProfileUpdate} />;
       default:
         return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
     }
@@ -374,8 +435,12 @@ const App: React.FC = () => {
     return <Spinner />;
   }
 
-  if (!session || !profile) {
+  if (supabaseEnabled && (!session || !profile)) {
     return <Auth />;
+  }
+
+  if (!profile) {
+    return <Spinner />;
   }
 
   return (
@@ -396,12 +461,13 @@ const App: React.FC = () => {
       )}
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
-          session={session}
+          session={session ?? undefined}
           profile={profile}
           theme={theme}
           toggleTheme={toggleTheme}
           setActiveView={handleSetActiveView}
           onMenuToggle={handleSidebarToggle}
+          isSupabaseEnabled={supabaseEnabled}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
           {renderActiveView()}

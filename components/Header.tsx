@@ -7,21 +7,36 @@ import { Profile, View } from '../types';
 import { Bars3Icon, UserCircleIcon } from './Icons';
 
 interface HeaderProps {
-    session: Session;
-    profile: Profile;
+    session?: Session | null;
+    profile?: Profile | null;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     setActiveView: (view: View) => void;
     onMenuToggle: () => void;
+    isSupabaseEnabled?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, setActiveView, onMenuToggle }) => {
+const Header: React.FC<HeaderProps> = ({
+  session,
+  profile,
+  theme,
+  toggleTheme,
+  setActiveView,
+  onMenuToggle,
+  isSupabaseEnabled = false,
+}) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   }
+
+  const showAccountMenu = Boolean(session && isSupabaseEnabled);
+  const primaryLabel = session?.user?.email ?? profile?.teamName ?? 'USACE Public Affairs';
+  const secondaryLabel = session?.user?.email
+    ? profile?.teamName ?? 'USACE Team'
+    : 'Demo data loaded';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,6 +47,12 @@ const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, s
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!showAccountMenu && dropdownOpen) {
+      setDropdownOpen(false);
+    }
+  }, [showAccountMenu, dropdownOpen]);
 
   return (
     <header className="flex-shrink-0 bg-white dark:bg-navy-800 border-b border-navy-200 dark:border-navy-700">
@@ -51,37 +72,49 @@ const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, s
         </div>
         <div className="flex items-center space-x-4">
             <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-            
+
             <div className="relative" ref={dropdownRef}>
-                <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center space-x-3 bg-transparent rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-800 focus:ring-usace-red"
-                >
-                    <Avatar url={profile.avatarUrl} name={session.user.email} size={32} />
+                {showAccountMenu ? (
+                  <>
+                    <button
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="flex items-center space-x-3 bg-transparent rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-800 focus:ring-usace-red"
+                    >
+                      <Avatar url={profile?.avatarUrl} name={primaryLabel} size={32} />
+                      <div className="hidden md:flex flex-col items-start">
+                        <span className="text-sm font-medium text-navy-800 dark:text-white">{primaryLabel}</span>
+                        <span className="text-xs text-gray-500 dark:text-navy-400">{secondaryLabel}</span>
+                      </div>
+                    </button>
+                    {dropdownOpen && (
+                      <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-navy-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <button
+                          onClick={() => {
+                            setActiveView('profile');
+                            setDropdownOpen(false);
+                          }}
+                          className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
+                        >
+                          <UserCircleIcon className="h-5 w-5 mr-3" />
+                          My Profile
+                        </button>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center space-x-3 rounded-full border border-navy-200/60 bg-white/60 px-3 py-1 dark:border-navy-700 dark:bg-navy-700/60">
+                    <Avatar url={profile?.avatarUrl} name={primaryLabel} size={32} />
                     <div className="hidden md:flex flex-col items-start">
-                        <span className="text-sm font-medium text-navy-800 dark:text-white">{session.user.email}</span>
-                        <span className="text-xs text-gray-500 dark:text-navy-400">{profile.teamName}</span>
+                      <span className="text-sm font-medium text-navy-800 dark:text-white">{primaryLabel}</span>
+                      <span className="text-xs text-gray-500 dark:text-navy-400">{secondaryLabel}</span>
                     </div>
-                </button>
-                {dropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-navy-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                        <button
-                            onClick={() => {
-                                setActiveView('profile');
-                                setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
-                        >
-                           <UserCircleIcon className="h-5 w-5 mr-3" />
-                           My Profile
-                        </button>
-                        <button
-                            onClick={handleSignOut}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
-                        >
-                            Sign Out
-                        </button>
-                    </div>
+                  </div>
                 )}
             </div>
         </div>
