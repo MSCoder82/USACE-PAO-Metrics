@@ -26,12 +26,13 @@ const FALLBACK_PROFILE: Profile = {
 
 const App: React.FC = () => {
   const supabaseEnabled = isSupabaseConfigured && supabaseConfigurationError === null;
-  const [kpiData, setKpiData] = useState<KpiDataPoint[]>(() => (supabaseEnabled ? [] : [...MOCK_KPI_DATA]));
-  const [campaigns, setCampaigns] = useState<Campaign[]>(() => (supabaseEnabled ? [] : [...MOCK_CAMPAIGN_DATA]));
-  const [goals, setGoals] = useState<KpiGoal[]>(() => (supabaseEnabled ? [] : [...MOCK_KPI_GOALS]));
+  const [isDemoMode, setIsDemoMode] = useState(() => !supabaseEnabled);
+  const [kpiData, setKpiData] = useState<KpiDataPoint[]>(() => (!supabaseEnabled ? [...MOCK_KPI_DATA] : []));
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => (!supabaseEnabled ? [...MOCK_CAMPAIGN_DATA] : []));
+  const [goals, setGoals] = useState<KpiGoal[]>(() => (!supabaseEnabled ? [...MOCK_KPI_GOALS] : []));
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(() => (supabaseEnabled ? null : { ...FALLBACK_PROFILE }));
+  const [profile, setProfile] = useState<Profile | null>(() => (!supabaseEnabled ? { ...FALLBACK_PROFILE } : null));
   const [isLoading, setIsLoading] = useState(supabaseEnabled);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -52,7 +53,7 @@ const App: React.FC = () => {
 
 
   const fetchKpiData = useCallback(async () => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setKpiData([...MOCK_KPI_DATA]);
       return;
     }
@@ -63,10 +64,10 @@ const App: React.FC = () => {
     } else {
       setKpiData(data as KpiDataPoint[]);
     }
-  }, [showToast, supabaseEnabled]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
   const fetchCampaigns = useCallback(async () => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setCampaigns([...MOCK_CAMPAIGN_DATA]);
       return;
     }
@@ -77,10 +78,10 @@ const App: React.FC = () => {
     } else {
       setCampaigns(data as Campaign[]);
     }
-  }, [showToast, supabaseEnabled]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
   const fetchGoals = useCallback(async () => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setGoals([...MOCK_KPI_GOALS]);
       return;
     }
@@ -91,14 +92,14 @@ const App: React.FC = () => {
     } else {
         setGoals(data as KpiGoal[]);
     }
-  }, [showToast, supabaseEnabled]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
   const isMountedRef = useRef(true);
   const isInitializingRef = useRef(false);
 
   const handleSession = useCallback(
     async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
-      if (!supabaseEnabled) {
+      if (!supabaseEnabled || isDemoMode) {
         return;
       }
       if (!isMountedRef.current) {
@@ -163,11 +164,11 @@ const App: React.FC = () => {
         setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
       }
     },
-    [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseEnabled]
+    [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseEnabled, isDemoMode]
   );
 
   const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       return;
     }
     if (isInitializingRef.current) {
@@ -205,12 +206,32 @@ const App: React.FC = () => {
       }
       isInitializingRef.current = false;
     }
-  }, [handleSession, showToast, supabaseEnabled]);
+  }, [handleSession, showToast, supabaseEnabled, isDemoMode]);
+
+  const hasShownDemoToastRef = useRef(false);
+
+  const showDemoModeNotification = useCallback(
+    (message: string) => {
+      if (hasShownDemoToastRef.current) {
+        return;
+      }
+      showToast(message, 'error');
+      hasShownDemoToastRef.current = true;
+    },
+    [showToast],
+  );
 
   useEffect(() => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setProfile({ ...FALLBACK_PROFILE });
+      setKpiData([...MOCK_KPI_DATA]);
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      setGoals([...MOCK_KPI_GOALS]);
       setIsLoading(false);
+      setIsDemoMode(true);
+      if (!supabaseEnabled) {
+        showDemoModeNotification('Supabase credentials were not found. Demo data is being displayed.');
+      }
       return;
     }
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
@@ -265,10 +286,10 @@ const App: React.FC = () => {
       isMountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, [handleSession, initializeSession, showToast, supabaseEnabled]);
+  }, [handleSession, initializeSession, isDemoMode, showDemoModeNotification, supabaseEnabled]);
 
   useEffect(() => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       return;
     }
     const handleVisibilityChange = () => {
@@ -290,11 +311,40 @@ const App: React.FC = () => {
       window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [initializeSession, supabaseEnabled]);
+  }, [initializeSession, supabaseEnabled, isDemoMode]);
+
+  useEffect(() => {
+    if (!supabaseEnabled || isDemoMode) {
+      return;
+    }
+
+    if (!isLoading) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (session || !isMountedRef.current) {
+        return;
+      }
+
+      console.warn('Supabase initialization timed out. Switching to demo mode.');
+      setIsDemoMode(true);
+      setProfile({ ...FALLBACK_PROFILE });
+      setKpiData([...MOCK_KPI_DATA]);
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      setGoals([...MOCK_KPI_GOALS]);
+      setIsLoading(false);
+      showDemoModeNotification('Supabase did not respond in time. Demo data is being displayed.');
+    }, 6000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [supabaseEnabled, isDemoMode, isLoading, session, showDemoModeNotification]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setKpiData((prevData) => {
         const nextId = prevData.reduce((max, item) => Math.max(max, item.id), 0) + 1;
         return [{ id: nextId, ...newDataPoint }, ...prevData];
@@ -319,10 +369,10 @@ const App: React.FC = () => {
       handleSetActiveView('table'); // Switch to table view
       showToast("KPI entry successfully added!", 'success');
     }
-  }, [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled]);
+  }, [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled, isDemoMode]);
 
   const addCampaign = useCallback(async (newCampaign: Omit<Campaign, 'id'>) => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setCampaigns((prevCampaigns) => {
         const nextId = prevCampaigns.reduce((max, item) => Math.max(max, item.id), 0) + 1;
         return [...prevCampaigns, { id: nextId, ...newCampaign }];
@@ -346,10 +396,10 @@ const App: React.FC = () => {
         await fetchCampaigns(); // Refetch campaigns
         showToast("Campaign created successfully!", 'success');
     }
-  }, [session, fetchCampaigns, showToast, supabaseEnabled]);
+  }, [session, fetchCampaigns, showToast, supabaseEnabled, isDemoMode]);
 
   const addGoal = useCallback(async (newGoal: Omit<KpiGoal, 'id'>) => {
-    if (!supabaseEnabled) {
+    if (!supabaseEnabled || isDemoMode) {
       setGoals((prevGoals) => {
         const nextId = prevGoals.reduce((max, item) => Math.max(max, item.id), 0) + 1;
         return [...prevGoals, { id: nextId, ...newGoal }];
@@ -372,7 +422,7 @@ const App: React.FC = () => {
         await fetchGoals();
         showToast("Goal created successfully!", 'success');
     }
-  }, [session, fetchGoals, showToast, supabaseEnabled]);
+  }, [session, fetchGoals, showToast, supabaseEnabled, isDemoMode]);
 
   const onProfileUpdate = (updatedProfileData: Partial<Profile>) => {
     setProfile(prevProfile => {
@@ -435,7 +485,7 @@ const App: React.FC = () => {
     return <Spinner />;
   }
 
-  if (supabaseEnabled && (!session || !profile)) {
+  if (supabaseEnabled && !isDemoMode && (!session || !profile)) {
     return <Auth />;
   }
 
@@ -468,7 +518,7 @@ const App: React.FC = () => {
           toggleTheme={toggleTheme}
           setActiveView={handleSetActiveView}
           onMenuToggle={handleSidebarToggle}
-          isSupabaseEnabled={supabaseEnabled}
+          isSupabaseEnabled={supabaseEnabled && !isDemoMode}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-8 sm:px-6 lg:px-12 subtle-scrollbar">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
