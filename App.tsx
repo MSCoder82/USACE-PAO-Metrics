@@ -1,22 +1,23 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, lazy, Suspense } from 'react';
 import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
 import { NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import KpiTable from './components/KpiTable';
-import DataEntry from './components/DataEntry';
-import PlanBuilder from './components/PlanBuilder';
-import Campaigns from './components/Campaigns';
-import GoalSetter from './components/GoalSetter';
-import SocialMedia from './components/SocialMedia';
 import Auth from './components/Auth';
-import ProfilePage from './components/ProfilePage';
 import { supabase } from './lib/supabase';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
 import Spinner from './components/Spinner';
+
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const KpiTable = lazy(() => import('./components/KpiTable'));
+const DataEntry = lazy(() => import('./components/DataEntry'));
+const PlanBuilder = lazy(() => import('./components/PlanBuilder'));
+const Campaigns = lazy(() => import('./components/Campaigns'));
+const GoalSetter = lazy(() => import('./components/GoalSetter'));
+const SocialMedia = lazy(() => import('./components/SocialMedia'));
+const ProfilePage = lazy(() => import('./components/ProfilePage'));
 
 const App: React.FC = () => {
   const [kpiData, setKpiData] = useState<KpiDataPoint[]>([]);
@@ -182,7 +183,7 @@ const App: React.FC = () => {
         isInitializingRef.current = false;
       }
     },
-    [handleSession, showToast],
+    [handleSession, showToast]
   );
 
   useEffect(() => {
@@ -407,7 +408,15 @@ const App: React.FC = () => {
           onMenuToggle={handleSidebarToggle}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
-          {renderActiveView()}
+          <Suspense
+            fallback={
+              <div className="flex h-full min-h-[200px] items-center justify-center text-sm text-navy-500 dark:text-navy-300">
+                Loading view...
+              </div>
+            }
+          >
+            {renderActiveView()}
+          </Suspense>
         </main>
       </div>
     </div>
