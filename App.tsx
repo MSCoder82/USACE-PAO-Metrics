@@ -144,43 +144,46 @@ const App: React.FC = () => {
     [fetchKpiData, fetchCampaigns, fetchGoals, showToast]
   );
 
-  const initializeSession = useCallback(async () => {
-    if (isInitializingRef.current) {
-      return;
-    }
-
-    isInitializingRef.current = true;
-
-    try {
-      if (isMountedRef.current) {
-        setIsLoading(true);
-      }
-
-      const { data, error } = await supabase.auth.getSession();
-
-      if (!isMountedRef.current) {
+  const initializeSession = useCallback(
+    async ({ showLoadingIndicator = true }: { showLoadingIndicator?: boolean } = {}) => {
+      if (isInitializingRef.current) {
         return;
       }
 
-      if (error) {
-        console.error('Error retrieving auth session:', error);
-      }
+      isInitializingRef.current = true;
 
-      await handleSession(data?.session ?? null);
-    } catch (error) {
-      if (!isMountedRef.current) {
-        return;
-      }
+      try {
+        if (isMountedRef.current && showLoadingIndicator) {
+          setIsLoading(true);
+        }
 
-      console.error('Unexpected error initializing authentication session:', error);
-      showToast('Error initializing authentication session. Please refresh and try again.', 'error');
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
+        const { data, error } = await supabase.auth.getSession();
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        if (error) {
+          console.error('Error retrieving auth session:', error);
+        }
+
+        await handleSession(data?.session ?? null);
+      } catch (error) {
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        console.error('Unexpected error initializing authentication session:', error);
+        showToast('Error initializing authentication session. Please refresh and try again.', 'error');
+      } finally {
+        if (isMountedRef.current && showLoadingIndicator) {
+          setIsLoading(false);
+        }
+        isInitializingRef.current = false;
       }
-      isInitializingRef.current = false;
-    }
-  }, [handleSession, showToast]);
+    },
+    [handleSession, showToast],
+  );
 
   useEffect(() => {
     // This listener handles the entire auth lifecycle: initial load, login, and logout.
@@ -240,13 +243,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        void initializeSession();
+        void initializeSession({ showLoadingIndicator: false });
       }
     };
 
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
-        void initializeSession();
+        void initializeSession({ showLoadingIndicator: false });
       }
     };
 
