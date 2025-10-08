@@ -96,7 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
           </select>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <KpiCard title="Media Pickups (Latest)" value={mediaPickupsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="pickups" icon={PresentationChartBarIcon} />
         <KpiCard title="Social Engagement (Latest)" value={engagementLatest?.quantity.toLocaleString() ?? 'N/A'} unit="%" icon={ChartPieIcon}/>
         <KpiCard title="News Releases (Total)" value={pressReleasesTotal.toLocaleString() ?? 'N/A'} unit="releases" icon={GlobeAltIcon}/>
