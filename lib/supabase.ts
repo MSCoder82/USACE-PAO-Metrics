@@ -36,17 +36,32 @@ const sanitizeEnvValue = (value: string | undefined): string | undefined => {
     return trimmed;
 };
 
-const providedUrl =
-    sanitizeEnvValue(readEnvValue('SUPABASE_URL') ?? readEnvValue('VITE_SUPABASE_URL')) ?? undefined;
-const providedAnonKey =
-    sanitizeEnvValue(readEnvValue('SUPABASE_ANON_KEY') ?? readEnvValue('VITE_SUPABASE_ANON_KEY')) ?? undefined;
+const providedUrl = sanitizeEnvValue(
+    readEnvValue('SUPABASE_URL') ?? readEnvValue('VITE_SUPABASE_URL'),
+);
+const providedAnonKey = sanitizeEnvValue(
+    readEnvValue('SUPABASE_ANON_KEY') ?? readEnvValue('VITE_SUPABASE_ANON_KEY'),
+);
 
-let supabaseUrl = providedUrl ?? PLACEHOLDER_URL;
-let supabaseAnonKey = providedAnonKey ?? PLACEHOLDER_ANON_KEY;
+const hasCustomUrl = Boolean(providedUrl && providedUrl !== PLACEHOLDER_URL);
+const hasCustomAnonKey = Boolean(providedAnonKey && providedAnonKey !== PLACEHOLDER_ANON_KEY);
+
+let supabaseUrl = PLACEHOLDER_URL;
+let supabaseAnonKey = PLACEHOLDER_ANON_KEY;
 
 let supabaseClient: SupabaseClient;
 let configurationError: Error | null = null;
-let usingCustomCredentials = Boolean(providedUrl && providedAnonKey);
+let usingCustomCredentials = false;
+
+if (hasCustomUrl && hasCustomAnonKey) {
+    supabaseUrl = providedUrl as string;
+    supabaseAnonKey = providedAnonKey as string;
+    usingCustomCredentials = true;
+} else if (hasCustomUrl !== hasCustomAnonKey) {
+    console.warn(
+        'Supabase credentials are partially configured. Both SUPABASE_URL and SUPABASE_ANON_KEY must be provided. Falling back to placeholder credentials.',
+    );
+}
 
 const createSupabaseInstance = (url: string, key: string) => createClient(url, key);
 
