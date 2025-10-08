@@ -230,7 +230,9 @@ const App: React.FC = () => {
       setIsLoading(false);
       setIsDemoMode(true);
       if (!supabaseEnabled) {
-        showDemoModeNotification('Supabase credentials were not found. Demo data is being displayed.');
+        showDemoModeNotification(
+          'Supabase credentials were not found or are still set to the placeholder values. Demo data is being displayed.',
+        );
       }
       return;
     }
