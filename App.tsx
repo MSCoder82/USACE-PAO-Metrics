@@ -77,6 +77,7 @@ const App: React.FC = () => {
 
   const isMountedRef = useRef(true);
   const isInitializingRef = useRef(false);
+  const latestSessionRef = useRef<Session | null>(null);
 
   const handleSession = useCallback(
     async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
@@ -195,15 +196,15 @@ const App: React.FC = () => {
     const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
     const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
 
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!isMountedRef.current) {
-          return;
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, authSession) => {
+      if (!isMountedRef.current) {
+        return;
+      }
 
       if (silentEvents.includes(event)) {
-        await handleSession(session, { fetchData: false });
+        await handleSession(authSession, { fetchData: false });
         return;
       }
 
@@ -215,12 +216,17 @@ const App: React.FC = () => {
         return;
       }
 
-      if (isMountedRef.current) {
+      const isSameUserReauth =
+        event === 'SIGNED_IN' &&
+        latestSessionRef.current?.user?.id !== undefined &&
+        authSession?.user?.id === latestSessionRef.current.user.id;
+
+      if (isMountedRef.current && !isSameUserReauth) {
         setIsLoading(true);
       }
 
       try {
-        await handleSession(session ?? null);
+        await handleSession(authSession ?? null);
       } catch (error) {
         if (!isMountedRef.current) {
           return;
@@ -240,6 +246,10 @@ const App: React.FC = () => {
       subscription.unsubscribe();
     };
   }, [handleSession, initializeSession, showToast]);
+
+  useEffect(() => {
+    latestSessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
