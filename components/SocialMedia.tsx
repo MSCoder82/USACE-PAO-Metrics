@@ -368,9 +368,6 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
-        <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Social Content Library</h2>
-        <p className="text-gray-600 dark:text-navy-300 mb-6">
       <section className="glass-panel space-y-6">
         <div className="space-y-3">
           <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Library</span>
@@ -479,8 +476,6 @@ const SocialMedia: React.FC<SocialMediaProps> = ({ role, campaigns }) => {
         </form>
       </section>
 
-      <section className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
-        <div className="flex items-center justify-between mb-4">
       <section className="glass-panel space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Saved links & placements</h3>
