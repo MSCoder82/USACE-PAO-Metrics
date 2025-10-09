@@ -14,9 +14,8 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ metric, currentValue, targe
   const daysRemaining = () => {
     const end = new Date(endDate);
     const now = new Date();
-    // To ignore time part of date
-    end.setUTCHours(0,0,0,0);
-    now.setUTCHours(0,0,0,0);
+    end.setUTCHours(0, 0, 0, 0);
+    now.setUTCHours(0, 0, 0, 0);
     const diffTime = end.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays < 0) return 'Ended';
@@ -25,19 +24,21 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ metric, currentValue, targe
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-4 rounded-lg shadow-card dark:shadow-card-dark flex flex-col justify-between">
-      <div>
     <div className="glass-panel flex h-full flex-col gap-4 p-5">
       <div className="space-y-3">
-        {campaignName && (
-          <span className="soft-badge">{campaignName}</span>
-        )}
+        {campaignName && <span className="soft-badge">{campaignName}</span>}
         <div className="flex items-start justify-between gap-2">
-          <h4 className="text-lg font-semibold text-navy-900 dark:text-white" title={metric}>{metric}</h4>
-          <span className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">{daysRemaining()}</span>
+          <h4 className="text-lg font-semibold text-navy-900 dark:text-white" title={metric}>
+            {metric}
+          </h4>
+          <span className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">
+            {daysRemaining()}
+          </span>
         </div>
         <div className="flex items-baseline justify-between text-sm">
-          <span className="font-medium text-navy-600 dark:text-navy-100">{currentValue.toLocaleString()} / {targetValue.toLocaleString()}</span>
+          <span className="font-medium text-navy-600 dark:text-navy-100">
+            {currentValue.toLocaleString()} / {targetValue.toLocaleString()}
+          </span>
           <span className="text-lg font-semibold text-usace-blue">{progressPercentage.toFixed(0)}%</span>
         </div>
       </div>
