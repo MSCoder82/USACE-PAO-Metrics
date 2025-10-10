@@ -37,8 +37,8 @@ const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(() => (!supabaseEnabled ? { ...FALLBACK_PROFILE } : null));
   const [isLoading, setIsLoading] = useState(supabaseEnabled);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => isDesktopViewport());
+
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
 
@@ -58,7 +58,6 @@ const App: React.FC = () => {
       setIsSidebarOpen(false);
     }
   }, []);
-
 
   const fetchKpiData = useCallback(async () => {
     if (!supabaseEnabled || isDemoMode) {
@@ -95,10 +94,10 @@ const App: React.FC = () => {
     }
     const { data, error } = await supabase.from('kpi_goals').select('*').order('start_date', { ascending: false });
     if (error) {
-        console.error('Error fetching KPI goals:', error);
-        showToast('Error fetching KPI goals.', 'error');
+      console.error('Error fetching KPI goals:', error);
+      showToast('Error fetching KPI goals.', 'error');
     } else {
-        setGoals(data as KpiGoal[]);
+      setGoals(data as KpiGoal[]);
     }
   }, [showToast, supabaseEnabled, isDemoMode]);
 
@@ -107,12 +106,8 @@ const App: React.FC = () => {
 
   const handleSession = useCallback(
     async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
-      if (!supabaseEnabled || isDemoMode) {
-        return;
-      }
-      if (!isMountedRef.current) {
-        return;
-      }
+      if (!supabaseEnabled || isDemoMode) return;
+      if (!isMountedRef.current) return;
 
       setSession(currentSession);
 
@@ -124,9 +119,7 @@ const App: React.FC = () => {
         return;
       }
 
-      if (options.fetchData === false) {
-        return;
-      }
+      if (options.fetchData === false) return;
 
       try {
         const { data, error } = await supabase
@@ -135,13 +128,9 @@ const App: React.FC = () => {
           .eq('id', currentSession.user.id)
           .single();
 
-        if (!isMountedRef.current) {
-          return;
-        }
+        if (!isMountedRef.current) return;
 
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
+        if (error && error.code !== 'PGRST116') throw error;
 
         if (data) {
           setProfile({
@@ -156,13 +145,12 @@ const App: React.FC = () => {
 
         await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
       } catch (error) {
-        if (!isMountedRef.current) {
-          return;
-        }
-
+        if (!isMountedRef.current) return;
         const typedError = error as { message?: string; code?: string };
         console.error(
-          `Error fetching user profile: ${typedError.message || 'An unknown error occurred'}. Code: ${typedError.code || 'N/A'}`
+          `Error fetching user profile: ${typedError.message || 'An unknown error occurred'}. Code: ${
+            typedError.code || 'N/A'
+          }`
         );
         if (typedError.code === '42P01') {
           showToast('Database error: A required table is missing. Run the setup SQL.', 'error');
@@ -177,16 +165,8 @@ const App: React.FC = () => {
 
   const initializeSession = useCallback(
     async ({ showLoadingIndicator = true }: { showLoadingIndicator?: boolean } = {}) => {
-      if (isInitializingRef.current) {
-        return;
-      }
-  const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
-    if (!supabaseEnabled || isDemoMode) {
-      return;
-    }
-    if (isInitializingRef.current) {
-      return;
-    }
+      if (!supabaseEnabled || isDemoMode) return;
+      if (isInitializingRef.current) return;
 
       isInitializingRef.current = true;
 
@@ -194,29 +174,17 @@ const App: React.FC = () => {
         if (isMountedRef.current && showLoadingIndicator) {
           setIsLoading(true);
         }
-    try {
-      if (isMountedRef.current && options.showLoading !== false) {
-        setIsLoading(true);
-      }
 
         const { data, error } = await supabase.auth.getSession();
-
-        if (!isMountedRef.current) {
-          return;
-        }
-
-        if (error) {
-          console.error('Error retrieving auth session:', error);
-        }
+        if (!isMountedRef.current) return;
+        if (error) console.error('Error retrieving auth session:', error);
 
         await handleSession(data?.session ?? null);
       } catch (error) {
-        if (!isMountedRef.current) {
-          return;
+        if (isMountedRef.current) {
+          console.error('Unexpected error initializing authentication session:', error);
+          showToast('Error initializing authentication session. Please refresh and try again.', 'error');
         }
-
-        console.error('Unexpected error initializing authentication session:', error);
-        showToast('Error initializing authentication session. Please refresh and try again.', 'error');
       } finally {
         if (isMountedRef.current && showLoadingIndicator) {
           setIsLoading(false);
@@ -224,22 +192,17 @@ const App: React.FC = () => {
         isInitializingRef.current = false;
       }
     },
-    [handleSession, showToast],
-      isInitializingRef.current = false;
-    }
-  }, [handleSession, showToast, supabaseEnabled, isDemoMode]);
+    [handleSession, showToast, supabaseEnabled, isDemoMode]
+  );
 
   const hasShownDemoToastRef = useRef(false);
-
   const showDemoModeNotification = useCallback(
     (message: string) => {
-      if (hasShownDemoToastRef.current) {
-        return;
-      }
+      if (hasShownDemoToastRef.current) return;
       showToast(message, 'error');
       hasShownDemoToastRef.current = true;
     },
-    [showToast],
+    [showToast]
   );
 
   useEffect(() => {
@@ -252,57 +215,41 @@ const App: React.FC = () => {
       setIsDemoMode(true);
       if (!supabaseEnabled) {
         showDemoModeNotification(
-          'Supabase credentials were not found or are still set to the placeholder values. Demo data is being displayed.',
+          'Supabase credentials were not found or are still set to the placeholder values. Demo data is being displayed.'
         );
       }
       return;
     }
-    // This listener handles the entire auth lifecycle: initial load, login, and logout.
-    isMountedRef.current = true;
 
+    isMountedRef.current = true;
     void initializeSession();
 
     const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
     const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
 
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!isMountedRef.current) {
-          return;
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMountedRef.current) return;
 
       if (silentEvents.includes(event)) {
         await handleSession(session, { fetchData: false });
         return;
       }
 
-      if (event === 'INITIAL_SESSION') {
-        return;
-      }
+      if (!handledEvents.includes(event)) return;
 
-      if (!handledEvents.includes(event)) {
-        return;
-      }
-
-      // No longer setting loading state here to prevent re-renders on tab focus
-      if (isMountedRef.current) {
-        setIsLoading(true);
-      }
+      if (isMountedRef.current) setIsLoading(true);
 
       try {
         await handleSession(session ?? null);
       } catch (error) {
-        if (!isMountedRef.current) {
-          return;
-        }
-
-        console.error('Unexpected error handling auth state change:', error);
-        showToast('Authentication update failed. Please refresh the page.', 'error');
-      } finally {
         if (isMountedRef.current) {
-          setIsLoading(false);
+          console.error('Unexpected error handling auth state change:', error);
+          showToast('Authentication update failed. Please refresh the page.', 'error');
         }
+      } finally {
+        if (isMountedRef.current) setIsLoading(false);
       }
     });
 
@@ -313,20 +260,17 @@ const App: React.FC = () => {
   }, [handleSession, initializeSession, isDemoMode, showDemoModeNotification, supabaseEnabled]);
 
   useEffect(() => {
-    if (!supabaseEnabled || isDemoMode) {
-      return;
-    }
+    if (!supabaseEnabled || isDemoMode) return;
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         void initializeSession({ showLoadingIndicator: false });
-        void initializeSession({ showLoading: false });
       }
     };
 
     const handlePageShow = (event: PageTransitionEvent) => {
       if (event.persisted) {
         void initializeSession({ showLoadingIndicator: false });
-        void initializeSession({ showLoading: false });
       }
     };
 
@@ -340,18 +284,11 @@ const App: React.FC = () => {
   }, [initializeSession, supabaseEnabled, isDemoMode]);
 
   useEffect(() => {
-    if (!supabaseEnabled || isDemoMode) {
-      return;
-    }
-
-    if (!isLoading) {
-      return;
-    }
+    if (!supabaseEnabled || isDemoMode) return;
+    if (!isLoading) return;
 
     const timeoutId = window.setTimeout(() => {
-      if (session || !isMountedRef.current) {
-        return;
-      }
+      if (session || !isMountedRef.current) return;
 
       console.warn('Supabase initialization timed out. Switching to demo mode.');
       setIsDemoMode(true);
@@ -368,108 +305,112 @@ const App: React.FC = () => {
     };
   }, [supabaseEnabled, isDemoMode, isLoading, session, showDemoModeNotification]);
 
-
-  const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
-    if (!supabaseEnabled || isDemoMode) {
-      setKpiData((prevData) => {
-        const nextId = prevData.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-        return [{ id: nextId, ...newDataPoint }, ...prevData];
-      });
-      handleSetActiveView('table');
-      showToast('KPI entry successfully added!', 'success');
-      return;
-    }
-    if (!session?.user) {
-        showToast("No user session found. Cannot add KPI data.", 'error');
+  const addKpiDataPoint = useCallback(
+    async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
+      if (!supabaseEnabled || isDemoMode) {
+        setKpiData((prevData) => {
+          const nextId = prevData.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+          return [{ id: nextId, ...newDataPoint }, ...prevData];
+        });
+        handleSetActiveView('table');
+        showToast('KPI entry successfully added!', 'success');
         return;
-    }
-    // team_id will be set by a database trigger based on the user's profile
-    const { error } = await supabase.from('kpi_data').insert([
-      { ...newDataPoint, user_id: session.user.id }
-    ]);
-    if (error) {
-      console.error('Error inserting KPI data:', error);
-      showToast(`Error: ${error.message}`, 'error');
-    } else {
-      await fetchKpiData(); // Refetch data
-      handleSetActiveView('table'); // Switch to table view
-      showToast("KPI entry successfully added!", 'success');
-    }
-  }, [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled, isDemoMode]);
+      }
 
-  const addCampaign = useCallback(async (newCampaign: Omit<Campaign, 'id'>) => {
-    if (!supabaseEnabled || isDemoMode) {
-      setCampaigns((prevCampaigns) => {
-        const nextId = prevCampaigns.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-        return [...prevCampaigns, { id: nextId, ...newCampaign }];
-      });
-      showToast("Campaign created successfully!", 'success');
-      return;
-    }
-    if (!session?.user) {
-        showToast("No user session found. Cannot add campaign.", 'error');
+      if (!session?.user) {
+        showToast('No user session found. Cannot add KPI data.', 'error');
         return;
-    }
-    // team_id will be set by a database trigger based on the user's profile
-    const { error } = await supabase.from('campaigns').insert([
-        { ...newCampaign, user_id: session.user.id }
-    ]);
+      }
 
-    if (error) {
+      const { error } = await supabase.from('kpi_data').insert([{ ...newDataPoint, user_id: session.user.id }]);
+      if (error) {
+        console.error('Error inserting KPI data:', error);
+        showToast(`Error: ${error.message}`, 'error');
+      } else {
+        await fetchKpiData();
+        handleSetActiveView('table');
+        showToast('KPI entry successfully added!', 'success');
+      }
+    },
+    [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled, isDemoMode]
+  );
+
+  const addCampaign = useCallback(
+    async (newCampaign: Omit<Campaign, 'id'>) => {
+      if (!supabaseEnabled || isDemoMode) {
+        setCampaigns((prevCampaigns) => {
+          const nextId = prevCampaigns.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+          return [...prevCampaigns, { id: nextId, ...newCampaign }];
+        });
+        showToast('Campaign created successfully!', 'success');
+        return;
+      }
+
+      if (!session?.user) {
+        showToast('No user session found. Cannot add campaign.', 'error');
+        return;
+      }
+
+      const { error } = await supabase.from('campaigns').insert([{ ...newCampaign, user_id: session.user.id }]);
+      if (error) {
         console.error('Error inserting campaign:', error);
         showToast(`Error: ${error.message}`, 'error');
-    } else {
-        await fetchCampaigns(); // Refetch campaigns
-        showToast("Campaign created successfully!", 'success');
-    }
-  }, [session, fetchCampaigns, showToast, supabaseEnabled, isDemoMode]);
+      } else {
+        await fetchCampaigns();
+        showToast('Campaign created successfully!', 'success');
+      }
+    },
+    [session, fetchCampaigns, showToast, supabaseEnabled, isDemoMode]
+  );
 
-  const addGoal = useCallback(async (newGoal: Omit<KpiGoal, 'id'>) => {
-    if (!supabaseEnabled || isDemoMode) {
-      setGoals((prevGoals) => {
-        const nextId = prevGoals.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-        return [...prevGoals, { id: nextId, ...newGoal }];
-      });
-      showToast("Goal created successfully!", 'success');
-      return;
-    }
-    if (!session?.user) {
-        showToast("No user session found. Cannot add goal.", 'error');
+  const addGoal = useCallback(
+    async (newGoal: Omit<KpiGoal, 'id'>) => {
+      if (!supabaseEnabled || isDemoMode) {
+        setGoals((prevGoals) => {
+          const nextId = prevGoals.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+          return [...prevGoals, { id: nextId, ...newGoal }];
+        });
+        showToast('Goal created successfully!', 'success');
         return;
-    }
-    const { error } = await supabase.from('kpi_goals').insert([
-        { ...newGoal, user_id: session.user.id }
-    ]);
+      }
 
-    if (error) {
+      if (!session?.user) {
+        showToast('No user session found. Cannot add goal.', 'error');
+        return;
+      }
+
+      const { error } = await supabase.from('kpi_goals').insert([{ ...newGoal, user_id: session.user.id }]);
+      if (error) {
         console.error('Error inserting KPI goal:', error);
         showToast(`Error: ${error.message}`, 'error');
-    } else {
+      } else {
         await fetchGoals();
-        showToast("Goal created successfully!", 'success');
-    }
-  }, [session, fetchGoals, showToast, supabaseEnabled, isDemoMode]);
+        showToast('Goal created successfully!', 'success');
+      }
+    },
+    [session, fetchGoals, showToast, supabaseEnabled, isDemoMode]
+  );
 
   const onProfileUpdate = (updatedProfileData: Partial<Profile>) => {
-    setProfile(prevProfile => {
-        if (!prevProfile) return null;
-        return { ...prevProfile, ...updatedProfileData };
-    });
+    setProfile((prevProfile) => (prevProfile ? { ...prevProfile, ...updatedProfileData } : null));
     showToast('Profile updated successfully!', 'success');
   };
-  
+
   const visibleNavItems = useMemo(() => {
     if (!profile) return [];
-    return NAVIGATION_ITEMS.filter(item => item.roles.includes(profile.role));
+    return NAVIGATION_ITEMS.filter((item) => item.roles.includes(profile.role));
   }, [profile]);
 
-  const isViewAllowed = useCallback((view: View) => {
-    if (!profile) return false;
-    if (view === 'profile') return true; // Any authenticated user can see their own profile
-    const item = NAVIGATION_ITEMS.find(navItem => navItem.id === view);
-    return item ? item.roles.includes(profile.role) : false;
-  }, [profile]);
-  
+  const isViewAllowed = useCallback(
+    (view: View) => {
+      if (!profile) return false;
+      if (view === 'profile') return true;
+      const item = NAVIGATION_ITEMS.find((navItem) => navItem.id === view);
+      return item ? item.roles.includes(profile.role) : false;
+    },
+    [profile]
+  );
+
   useEffect(() => {
     if (profile && !isViewAllowed(activeView)) {
       handleSetActiveView('dashboard');
@@ -477,21 +418,14 @@ const App: React.FC = () => {
   }, [profile, activeView, isViewAllowed, handleSetActiveView]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
+    if (typeof window === 'undefined') return;
 
     const handleResize = () => {
-      if (isDesktopViewport()) {
-        setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
-      }
+      setIsSidebarOpen(isDesktopViewport());
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
-
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -499,7 +433,6 @@ const App: React.FC = () => {
 
   const renderActiveView = () => {
     if (!profile || !isViewAllowed(activeView)) {
-      // Default to dashboard if current view is not allowed
       return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
     }
 
@@ -528,18 +461,9 @@ const App: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return <Spinner />;
-  }
-
-  if (supabaseEnabled && !isDemoMode && (!session || !profile)) {
-    return <Auth />;
-  }
-
-  if (!profile) {
-    return <Spinner />;
-  }
-
+  if (isLoading) return <Spinner />;
+  if (supabaseEnabled && !isDemoMode && (!session || !profile)) return <Auth />;
+  if (!profile) return <Spinner />;
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden text-navy-900 transition-colors duration-300 ease-out dark:text-navy-100">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/70 via-white/20 to-navy-100/20 dark:from-navy-950 dark:via-navy-950/70 dark:to-navy-900" />
