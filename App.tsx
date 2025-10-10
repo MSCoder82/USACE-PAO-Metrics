@@ -197,8 +197,7 @@ const App: React.FC = () => {
         return;
       }
 
-      setIsLoading(true);
-
+      // No longer setting loading state here to prevent re-renders on tab focus
       try {
         await handleSession(session ?? null);
       } catch (error) {
@@ -208,10 +207,6 @@ const App: React.FC = () => {
 
         console.error('Unexpected error handling auth state change:', error);
         showToast('Authentication update failed. Please refresh the page.', 'error');
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
       }
     });
 
