@@ -285,6 +285,7 @@ const App: React.FC = () => {
         return;
       }
 
+      // No longer setting loading state here to prevent re-renders on tab focus
       if (isMountedRef.current) {
         setIsLoading(true);
       }
