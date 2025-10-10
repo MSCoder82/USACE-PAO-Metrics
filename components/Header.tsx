@@ -7,21 +7,36 @@ import { Profile, View } from '../types';
 import { Bars3Icon, UserCircleIcon } from './Icons';
 
 interface HeaderProps {
-    session: Session;
-    profile: Profile;
+    session?: Session | null;
+    profile?: Profile | null;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
     setActiveView: (view: View) => void;
     onMenuToggle: () => void;
+    isSupabaseEnabled?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, setActiveView, onMenuToggle }) => {
+const Header: React.FC<HeaderProps> = ({
+  session,
+  profile,
+  theme,
+  toggleTheme,
+  setActiveView,
+  onMenuToggle,
+  isSupabaseEnabled = false,
+}) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   }
+
+  const showAccountMenu = Boolean(session && isSupabaseEnabled);
+  const primaryLabel = session?.user?.email ?? profile?.teamName ?? 'USACE Public Affairs';
+  const secondaryLabel = session?.user?.email
+    ? profile?.teamName ?? 'USACE Team'
+    : 'Demo data loaded';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,57 +48,75 @@ const Header: React.FC<HeaderProps> = ({ session, profile, theme, toggleTheme, s
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!showAccountMenu && dropdownOpen) {
+      setDropdownOpen(false);
+    }
+  }, [showAccountMenu, dropdownOpen]);
+
   return (
-    <header className="flex-shrink-0 bg-white dark:bg-navy-800 border-b border-navy-200 dark:border-navy-700">
-      <div className="flex h-16 items-center justify-between p-4">
-        <div className="flex items-center">
+    <header className="flex-shrink-0 px-4 pt-6 sm:px-6 lg:px-10">
+      <div className="glass-header flex h-16 items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onMenuToggle}
-            className="mr-3 inline-flex items-center justify-center rounded-md p-2 text-navy-700 transition hover:bg-navy-100 focus:outline-none focus:ring-2 focus:ring-usace-red focus:ring-offset-2 dark:text-navy-200 dark:hover:bg-navy-700 dark:focus:ring-offset-navy-800 lg:hidden"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/40 bg-white/70 text-navy-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-usace-red focus-visible:ring-offset-2 dark:border-white/10 dark:bg-white/10 dark:text-navy-100 dark:focus-visible:ring-offset-navy-900 lg:hidden"
             aria-label="Toggle navigation menu"
           >
-            <Bars3Icon className="h-6 w-6" />
+            <Bars3Icon className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-semibold text-navy-800 dark:text-white tracking-tight">
-            PAO KPI Tracker
-          </h1>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/80 dark:text-navy-200/80">USACE PAO</p>
+            <h1 className="text-xl font-semibold text-navy-900 dark:text-white">KPI Command Center</h1>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
-            <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
-            
-            <div className="relative" ref={dropdownRef}>
+        <div className="flex items-center gap-3">
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+          <div className="relative" ref={dropdownRef}>
+            {showAccountMenu ? (
+              <>
                 <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center space-x-3 bg-transparent rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-navy-800 focus:ring-usace-red"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-3 rounded-2xl border border-white/40 bg-white/70 px-2 py-1 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-usace-red focus-visible:ring-offset-2 dark:border-white/10 dark:bg-white/10 dark:focus-visible:ring-offset-navy-900"
                 >
-                    <Avatar url={profile.avatarUrl} name={session.user.email} size={32} />
-                    <div className="hidden md:flex flex-col items-start">
-                        <span className="text-sm font-medium text-navy-800 dark:text-white">{session.user.email}</span>
-                        <span className="text-xs text-gray-500 dark:text-navy-400">{profile.teamName}</span>
-                    </div>
+                  <Avatar url={profile?.avatarUrl} name={primaryLabel} size={36} />
+                  <div className="hidden md:flex flex-col items-start text-left">
+                    <span className="text-sm font-semibold text-navy-900 dark:text-white">{primaryLabel}</span>
+                    <span className="text-xs font-medium text-navy-500/80 dark:text-navy-200/80">{secondaryLabel}</span>
+                  </div>
                 </button>
                 {dropdownOpen && (
-                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-navy-700 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                        <button
-                            onClick={() => {
-                                setActiveView('profile');
-                                setDropdownOpen(false);
-                            }}
-                            className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
-                        >
-                           <UserCircleIcon className="h-5 w-5 mr-3" />
-                           My Profile
-                        </button>
-                        <button
-                            onClick={handleSignOut}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-navy-200 hover:bg-gray-100 dark:hover:bg-navy-600"
-                        >
-                            Sign Out
-                        </button>
-                    </div>
+                  <div className="absolute right-0 mt-3 w-56 origin-top-right rounded-2xl border border-white/40 bg-white/90 p-2 shadow-xl ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-navy-900/90">
+                    <button
+                      onClick={() => {
+                        setActiveView('profile');
+                        setDropdownOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-navy-600 transition hover:bg-usace-blue/10 hover:text-usace-blue dark:text-navy-100 dark:hover:bg-white/10 dark:hover:text-white"
+                    >
+                      <UserCircleIcon className="h-5 w-5" />
+                      My Profile
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-navy-600 transition hover:bg-usace-red/10 hover:text-usace-red dark:text-navy-100 dark:hover:bg-usace-red/20 dark:hover:text-white"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
                 )}
-            </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/40 bg-white/70 px-3 py-1.5 shadow-sm dark:border-white/10 dark:bg-white/10">
+                <Avatar url={profile?.avatarUrl} name={primaryLabel} size={36} />
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-sm font-semibold text-navy-900 dark:text-white">{primaryLabel}</span>
+                  <span className="text-xs font-medium text-navy-500/80 dark:text-navy-200/80">{secondaryLabel}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

@@ -12,7 +12,7 @@ interface KpiBarChartProps {
 const KpiBarChart: React.FC<KpiBarChartProps> = ({ data }) => {
     const { theme } = useTheme();
     const tickColor = theme === 'dark' ? '#9cb9d1' : '#33455d';
-    const gridColor = theme === 'dark' ? '#3a516e' : '#e5e7eb';
+    const gridColor = theme === 'dark' ? '#334155' : 'rgba(148, 163, 184, 0.25)';
 
     const mediaMentionsData = data
         .filter(d => d.metric === 'Media pickups')
@@ -44,23 +44,33 @@ const KpiBarChart: React.FC<KpiBarChartProps> = ({ data }) => {
                 <BarChart
                     data={chartData}
                     margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
+                        top: 10,
+                        right: 20,
+                        left: 10,
+                        bottom: 10,
                     }}
                 >
+                    <defs>
+                        <linearGradient id="mediaPickupsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={theme === 'dark' ? '#60a5fa' : '#2563eb'} stopOpacity={0.95} />
+                            <stop offset="100%" stopColor={theme === 'dark' ? '#3b82f6' : '#1d4ed8'} stopOpacity={0.85} />
+                        </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                    <XAxis dataKey="name" tick={{ fill: tickColor }} fontSize={12} />
-                    <YAxis tick={{ fill: tickColor }} fontSize={12} />
-                    <Tooltip 
-                        contentStyle={{ 
-                            backgroundColor: theme === 'dark' ? '#2f3d51' : '#ffffff',
-                            borderColor: theme === 'dark' ? '#3a516e' : '#e5e7eb'
+                    <XAxis dataKey="name" tick={{ fill: tickColor }} fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis tick={{ fill: tickColor }} fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                        cursor={{ fill: theme === 'dark' ? 'rgba(148, 163, 184, 0.08)' : 'rgba(37, 99, 235, 0.08)' }}
+                        contentStyle={{
+                            backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff',
+                            borderRadius: 16,
+                            borderColor: theme === 'dark' ? '#1e293b' : '#e2e8f0',
+                            boxShadow: '0 20px 45px -30px rgba(15, 23, 42, 0.45)'
                         }}
+                        labelStyle={{ color: tickColor, fontWeight: 600 }}
                     />
                     <Legend wrapperStyle={{ color: tickColor }} />
-                    <Bar dataKey="Pickups" fill="#003366" />
+                    <Bar dataKey="Pickups" fill="url(#mediaPickupsGradient)" radius={[12, 12, 12, 12]} />
                 </BarChart>
             </ResponsiveContainer>
         </div>

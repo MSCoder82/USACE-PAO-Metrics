@@ -1,4 +1,4 @@
-import { KpiDataPoint, EntryType, NavItem, Campaign } from './types';
+import { KpiDataPoint, EntryType, NavItem, Campaign, KpiGoal } from './types';
 import {
   HomeIcon,
   TableCellsIcon,
@@ -9,9 +9,115 @@ import {
   GlobeAltIcon,
 } from './components/Icons';
 
-export const MOCK_CAMPAIGN_DATA: Campaign[] = [];
+export const MOCK_CAMPAIGN_DATA: Campaign[] = [
+  {
+    id: 1,
+    name: 'Hurricane Season Preparedness',
+    description: 'Educate communities on emergency procedures ahead of hurricane season.',
+    start_date: '2024-03-01',
+    end_date: '2024-09-30',
+  },
+  {
+    id: 2,
+    name: 'Water Safety Awareness',
+    description: 'Promote safe recreation on Corps-managed lakes and waterways.',
+    start_date: '2024-05-01',
+    end_date: '2024-08-31',
+  },
+  {
+    id: 3,
+    name: 'Infrastructure Modernization',
+    description: 'Highlight progress on major civil works modernization projects.',
+    start_date: '2024-01-15',
+    end_date: '2024-12-15',
+  },
+];
 
-export const MOCK_KPI_DATA: KpiDataPoint[] = [];
+export const MOCK_KPI_DATA: KpiDataPoint[] = [
+  {
+    id: 1,
+    date: '2024-08-15',
+    type: EntryType.OUTTAKE,
+    metric: 'Media pickups',
+    quantity: 42,
+    notes: 'Regional outlets covering hurricane preparedness briefing.',
+    campaign_id: 1,
+  },
+  {
+    id: 2,
+    date: '2024-08-12',
+    type: EntryType.OUTTAKE,
+    metric: 'Engagement rate',
+    quantity: 7.4,
+    notes: 'Week-over-week engagement increase on safety campaign posts.',
+    campaign_id: 2,
+  },
+  {
+    id: 3,
+    date: '2024-08-10',
+    type: EntryType.OUTPUT,
+    metric: 'News release',
+    quantity: 4,
+    notes: 'Press releases issued for upcoming levee repair milestones.',
+    campaign_id: 3,
+  },
+  {
+    id: 4,
+    date: '2024-08-09',
+    type: EntryType.OUTPUT,
+    metric: 'Social posts (FB/X/IG/LI)',
+    quantity: 28,
+    notes: 'Organic posts across all platforms supporting water safety messaging.',
+    campaign_id: 2,
+    link: 'https://www.instagram.com/usace',
+  },
+  {
+    id: 5,
+    date: '2024-08-05',
+    type: EntryType.OUTTAKE,
+    metric: 'Video views',
+    quantity: 15600,
+    notes: 'Drone footage of modernization project reached regional audiences.',
+    campaign_id: 3,
+    link: 'https://www.dvidshub.net/video/123456',
+  },
+  {
+    id: 6,
+    date: '2024-08-03',
+    type: EntryType.OUTCOME,
+    metric: 'Preparedness actions taken',
+    quantity: 18,
+    notes: 'Local partners hosted preparedness workshops after Corps outreach.',
+    campaign_id: 1,
+  },
+];
+
+export const MOCK_KPI_GOALS: KpiGoal[] = [
+  {
+    id: 1,
+    metric: 'Media pickups',
+    target_value: 50,
+    start_date: '2024-07-01',
+    end_date: '2024-09-30',
+    campaign_id: 1,
+  },
+  {
+    id: 2,
+    metric: 'Engagement rate',
+    target_value: 8.5,
+    start_date: '2024-06-01',
+    end_date: '2024-08-31',
+    campaign_id: 2,
+  },
+  {
+    id: 3,
+    metric: 'Video views',
+    target_value: 20000,
+    start_date: '2024-05-01',
+    end_date: '2024-12-15',
+    campaign_id: 3,
+  },
+];
 
 
 export const NAVIGATION_ITEMS: NavItem[] = [

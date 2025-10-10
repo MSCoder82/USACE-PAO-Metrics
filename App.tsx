@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { KpiDataPoint, View, Role, Campaign, Profile, KpiGoal } from './types';
-import { NAVIGATION_ITEMS } from './constants';
+import { MOCK_CAMPAIGN_DATA, MOCK_KPI_DATA, MOCK_KPI_GOALS, NAVIGATION_ITEMS } from './constants';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -12,27 +12,41 @@ import GoalSetter from './components/GoalSetter';
 import SocialMedia from './components/SocialMedia';
 import Auth from './components/Auth';
 import ProfilePage from './components/ProfilePage';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured, supabaseConfigurationError } from './lib/supabase';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { useTheme } from './contexts/ThemeProvider';
 import { useNotification } from './contexts/NotificationProvider';
 import Spinner from './components/Spinner';
 
+const DESKTOP_BREAKPOINT = 1024;
+const isDesktopViewport = () => typeof window !== 'undefined' && window.innerWidth >= DESKTOP_BREAKPOINT;
+
+const FALLBACK_PROFILE: Profile = {
+  role: 'chief',
+  teamId: 101,
+  teamName: 'Public Affairs Office',
+};
+
 const App: React.FC = () => {
-  const [kpiData, setKpiData] = useState<KpiDataPoint[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [goals, setGoals] = useState<KpiGoal[]>([]);
+  const supabaseEnabled = isSupabaseConfigured && supabaseConfigurationError === null;
+  const [isDemoMode, setIsDemoMode] = useState(() => !supabaseEnabled);
+  const [kpiData, setKpiData] = useState<KpiDataPoint[]>(() => (!supabaseEnabled ? [...MOCK_KPI_DATA] : []));
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() => (!supabaseEnabled ? [...MOCK_CAMPAIGN_DATA] : []));
+  const [goals, setGoals] = useState<KpiGoal[]>(() => (!supabaseEnabled ? [...MOCK_KPI_GOALS] : []));
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(() => (!supabaseEnabled ? { ...FALLBACK_PROFILE } : null));
+  const [isLoading, setIsLoading] = useState(supabaseEnabled);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => isDesktopViewport());
   const { theme, toggleTheme } = useTheme();
   const { showToast } = useNotification();
 
   const handleSetActiveView = useCallback((view: View) => {
     setActiveView(view);
-    setIsSidebarOpen(false);
+    if (!isDesktopViewport()) {
+      setIsSidebarOpen(false);
+    }
   }, []);
 
   const handleSidebarToggle = useCallback(() => {
@@ -40,11 +54,17 @@ const App: React.FC = () => {
   }, []);
 
   const handleSidebarClose = useCallback(() => {
-    setIsSidebarOpen(false);
+    if (!isDesktopViewport()) {
+      setIsSidebarOpen(false);
+    }
   }, []);
 
 
   const fetchKpiData = useCallback(async () => {
+    if (!supabaseEnabled || isDemoMode) {
+      setKpiData([...MOCK_KPI_DATA]);
+      return;
+    }
     const { data, error } = await supabase.from('kpi_data').select('*').order('date', { ascending: false });
     if (error) {
       console.error('Error fetching KPI data:', error);
@@ -52,9 +72,13 @@ const App: React.FC = () => {
     } else {
       setKpiData(data as KpiDataPoint[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
   const fetchCampaigns = useCallback(async () => {
+    if (!supabaseEnabled || isDemoMode) {
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      return;
+    }
     const { data, error } = await supabase.from('campaigns').select('*').order('start_date', { ascending: false });
     if (error) {
       console.error('Error fetching campaigns:', error);
@@ -62,9 +86,13 @@ const App: React.FC = () => {
     } else {
       setCampaigns(data as Campaign[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
   const fetchGoals = useCallback(async () => {
+    if (!supabaseEnabled || isDemoMode) {
+      setGoals([...MOCK_KPI_GOALS]);
+      return;
+    }
     const { data, error } = await supabase.from('kpi_goals').select('*').order('start_date', { ascending: false });
     if (error) {
         console.error('Error fetching KPI goals:', error);
@@ -72,20 +100,23 @@ const App: React.FC = () => {
     } else {
         setGoals(data as KpiGoal[]);
     }
-  }, [showToast]);
+  }, [showToast, supabaseEnabled, isDemoMode]);
 
-  useEffect(() => {
-    // This listener handles the entire auth lifecycle: initial load, login, and logout.
-    let isMounted = true;
+  const isMountedRef = useRef(true);
+  const isInitializingRef = useRef(false);
 
-    const handleSession = async (session: Session | null, options: { fetchData?: boolean } = {}) => {
-      if (!isMounted) {
+  const handleSession = useCallback(
+    async (currentSession: Session | null, options: { fetchData?: boolean } = {}) => {
+      if (!supabaseEnabled || isDemoMode) {
+        return;
+      }
+      if (!isMountedRef.current) {
         return;
       }
 
-      setSession(session);
+      setSession(currentSession);
 
-      if (!session) {
+      if (!currentSession) {
         setProfile(null);
         setKpiData([]);
         setCampaigns([]);
@@ -101,10 +132,10 @@ const App: React.FC = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('role, avatar_url, teams (id, name)')
-          .eq('id', session.user.id)
+          .eq('id', currentSession.user.id)
           .single();
 
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -123,10 +154,9 @@ const App: React.FC = () => {
           setProfile({ role: 'staff', teamId: -1, teamName: 'Unknown Team' });
         }
 
-        // Fetch data after session and profile are confirmed
         await Promise.all([fetchKpiData(), fetchCampaigns(), fetchGoals()]);
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -141,15 +171,37 @@ const App: React.FC = () => {
         }
         setProfile({ role: 'staff', teamId: -1, teamName: 'Error' });
       }
-    };
+    },
+    [fetchKpiData, fetchCampaigns, fetchGoals, showToast, supabaseEnabled, isDemoMode]
+  );
 
-    const initializeSession = async () => {
-      setIsLoading(true);
+  const initializeSession = useCallback(
+    async ({ showLoadingIndicator = true }: { showLoadingIndicator?: boolean } = {}) => {
+      if (isInitializingRef.current) {
+        return;
+      }
+  const initializeSession = useCallback(async (options: { showLoading?: boolean } = {}) => {
+    if (!supabaseEnabled || isDemoMode) {
+      return;
+    }
+    if (isInitializingRef.current) {
+      return;
+    }
+
+      isInitializingRef.current = true;
 
       try {
+        if (isMountedRef.current && showLoadingIndicator) {
+          setIsLoading(true);
+        }
+    try {
+      if (isMountedRef.current && options.showLoading !== false) {
+        setIsLoading(true);
+      }
+
         const { data, error } = await supabase.auth.getSession();
 
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -159,30 +211,66 @@ const App: React.FC = () => {
 
         await handleSession(data?.session ?? null);
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
         console.error('Unexpected error initializing authentication session:', error);
         showToast('Error initializing authentication session. Please refresh and try again.', 'error');
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current && showLoadingIndicator) {
           setIsLoading(false);
         }
+        isInitializingRef.current = false;
       }
-    };
+    },
+    [handleSession, showToast],
+      isInitializingRef.current = false;
+    }
+  }, [handleSession, showToast, supabaseEnabled, isDemoMode]);
 
-    initializeSession();
+  const hasShownDemoToastRef = useRef(false);
+
+  const showDemoModeNotification = useCallback(
+    (message: string) => {
+      if (hasShownDemoToastRef.current) {
+        return;
+      }
+      showToast(message, 'error');
+      hasShownDemoToastRef.current = true;
+    },
+    [showToast],
+  );
+
+  useEffect(() => {
+    if (!supabaseEnabled || isDemoMode) {
+      setProfile({ ...FALLBACK_PROFILE });
+      setKpiData([...MOCK_KPI_DATA]);
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      setGoals([...MOCK_KPI_GOALS]);
+      setIsLoading(false);
+      setIsDemoMode(true);
+      if (!supabaseEnabled) {
+        showDemoModeNotification(
+          'Supabase credentials were not found or are still set to the placeholder values. Demo data is being displayed.',
+        );
+      }
+      return;
+    }
+    // This listener handles the entire auth lifecycle: initial load, login, and logout.
+    isMountedRef.current = true;
+
+    void initializeSession();
 
     const handledEvents: AuthChangeEvent[] = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'];
     const silentEvents: AuthChangeEvent[] = ['TOKEN_REFRESHED'];
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) {
-        return;
-      }
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMountedRef.current) {
+          return;
+        }
 
       if (silentEvents.includes(event)) {
         await handleSession(session, { fetchData: false });
@@ -198,26 +286,99 @@ const App: React.FC = () => {
       }
 
       // No longer setting loading state here to prevent re-renders on tab focus
+      if (isMountedRef.current) {
+        setIsLoading(true);
+      }
+
       try {
         await handleSession(session ?? null);
       } catch (error) {
-        if (!isMounted) {
+        if (!isMountedRef.current) {
           return;
         }
 
         console.error('Unexpected error handling auth state change:', error);
         showToast('Authentication update failed. Please refresh the page.', 'error');
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     });
 
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, [fetchKpiData, fetchCampaigns, fetchGoals, showToast]);
+  }, [handleSession, initializeSession, isDemoMode, showDemoModeNotification, supabaseEnabled]);
+
+  useEffect(() => {
+    if (!supabaseEnabled || isDemoMode) {
+      return;
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void initializeSession({ showLoadingIndicator: false });
+        void initializeSession({ showLoading: false });
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void initializeSession({ showLoadingIndicator: false });
+        void initializeSession({ showLoading: false });
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [initializeSession, supabaseEnabled, isDemoMode]);
+
+  useEffect(() => {
+    if (!supabaseEnabled || isDemoMode) {
+      return;
+    }
+
+    if (!isLoading) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (session || !isMountedRef.current) {
+        return;
+      }
+
+      console.warn('Supabase initialization timed out. Switching to demo mode.');
+      setIsDemoMode(true);
+      setProfile({ ...FALLBACK_PROFILE });
+      setKpiData([...MOCK_KPI_DATA]);
+      setCampaigns([...MOCK_CAMPAIGN_DATA]);
+      setGoals([...MOCK_KPI_GOALS]);
+      setIsLoading(false);
+      showDemoModeNotification('Supabase did not respond in time. Demo data is being displayed.');
+    }, 6000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [supabaseEnabled, isDemoMode, isLoading, session, showDemoModeNotification]);
 
 
   const addKpiDataPoint = useCallback(async (newDataPoint: Omit<KpiDataPoint, 'id'>) => {
+    if (!supabaseEnabled || isDemoMode) {
+      setKpiData((prevData) => {
+        const nextId = prevData.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [{ id: nextId, ...newDataPoint }, ...prevData];
+      });
+      handleSetActiveView('table');
+      showToast('KPI entry successfully added!', 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add KPI data.", 'error');
         return;
@@ -234,9 +395,17 @@ const App: React.FC = () => {
       handleSetActiveView('table'); // Switch to table view
       showToast("KPI entry successfully added!", 'success');
     }
-  }, [session, fetchKpiData, showToast, handleSetActiveView]);
+  }, [session, fetchKpiData, showToast, handleSetActiveView, supabaseEnabled, isDemoMode]);
 
   const addCampaign = useCallback(async (newCampaign: Omit<Campaign, 'id'>) => {
+    if (!supabaseEnabled || isDemoMode) {
+      setCampaigns((prevCampaigns) => {
+        const nextId = prevCampaigns.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [...prevCampaigns, { id: nextId, ...newCampaign }];
+      });
+      showToast("Campaign created successfully!", 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add campaign.", 'error');
         return;
@@ -253,9 +422,17 @@ const App: React.FC = () => {
         await fetchCampaigns(); // Refetch campaigns
         showToast("Campaign created successfully!", 'success');
     }
-  }, [session, fetchCampaigns, showToast]);
+  }, [session, fetchCampaigns, showToast, supabaseEnabled, isDemoMode]);
 
   const addGoal = useCallback(async (newGoal: Omit<KpiGoal, 'id'>) => {
+    if (!supabaseEnabled || isDemoMode) {
+      setGoals((prevGoals) => {
+        const nextId = prevGoals.reduce((max, item) => Math.max(max, item.id), 0) + 1;
+        return [...prevGoals, { id: nextId, ...newGoal }];
+      });
+      showToast("Goal created successfully!", 'success');
+      return;
+    }
     if (!session?.user) {
         showToast("No user session found. Cannot add goal.", 'error');
         return;
@@ -271,7 +448,7 @@ const App: React.FC = () => {
         await fetchGoals();
         showToast("Goal created successfully!", 'success');
     }
-  }, [session, fetchGoals, showToast]);
+  }, [session, fetchGoals, showToast, supabaseEnabled, isDemoMode]);
 
   const onProfileUpdate = (updatedProfileData: Partial<Profile>) => {
     setProfile(prevProfile => {
@@ -299,6 +476,27 @@ const App: React.FC = () => {
     }
   }, [profile, activeView, isViewAllowed, handleSetActiveView]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleResize = () => {
+      if (isDesktopViewport()) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   const renderActiveView = () => {
     if (!profile || !isViewAllowed(activeView)) {
       // Default to dashboard if current view is not allowed
@@ -321,7 +519,10 @@ const App: React.FC = () => {
       case 'social-media':
         return <SocialMedia role={profile.role} campaigns={campaigns} />;
       case 'profile':
-        return <ProfilePage session={session!} profile={profile} onProfileUpdate={onProfileUpdate} />;
+        if (!session) {
+          return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
+        }
+        return <ProfilePage session={session} profile={profile} onProfileUpdate={onProfileUpdate} />;
       default:
         return <Dashboard data={kpiData} campaigns={campaigns} goals={goals} />;
     }
@@ -331,12 +532,17 @@ const App: React.FC = () => {
     return <Spinner />;
   }
 
-  if (!session || !profile) {
+  if (supabaseEnabled && !isDemoMode && (!session || !profile)) {
     return <Auth />;
   }
 
+  if (!profile) {
+    return <Spinner />;
+  }
+
   return (
-    <div className="flex min-h-screen bg-navy-50 font-sans text-navy-900 dark:bg-navy-950 dark:text-navy-100">
+    <div className="relative flex min-h-screen w-full overflow-hidden text-navy-900 transition-colors duration-300 ease-out dark:text-navy-100">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-white/70 via-white/20 to-navy-100/20 dark:from-navy-950 dark:via-navy-950/70 dark:to-navy-900" />
       <Sidebar
         navigationItems={visibleNavItems}
         activeView={activeView}
@@ -346,22 +552,25 @@ const App: React.FC = () => {
       />
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-navy-950/60 backdrop-blur-sm lg:hidden"
           onClick={handleSidebarClose}
           aria-hidden="true"
         />
       )}
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
-          session={session}
+          session={session ?? undefined}
           profile={profile}
           theme={theme}
           toggleTheme={toggleTheme}
           setActiveView={handleSetActiveView}
           onMenuToggle={handleSidebarToggle}
+          isSupabaseEnabled={supabaseEnabled && !isDemoMode}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-6 lg:p-8">
-          {renderActiveView()}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-8 sm:px-6 lg:px-12 subtle-scrollbar">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+            {renderActiveView()}
+          </div>
         </main>
       </div>
     </div>

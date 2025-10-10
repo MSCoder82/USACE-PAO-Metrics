@@ -9,10 +9,12 @@ interface EmptyStateProps {
 
 const EmptyState: React.FC<EmptyStateProps> = ({ title, message, icon: Icon = DocumentMagnifyingGlassIcon }) => {
   return (
-    <div className="text-center bg-gray-50 dark:bg-navy-800/50 border-2 border-dashed border-gray-300 dark:border-navy-700 rounded-lg p-12 my-4">
-      <Icon className="mx-auto h-12 w-12 text-gray-400 dark:text-navy-500" />
-      <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500 dark:text-navy-400">{message}</p>
+    <div className="my-4 rounded-3xl border-2 border-dashed border-white/40 bg-white/40 p-12 text-center backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-usace-blue/20 to-usace-red/20 text-usace-blue">
+        <Icon className="h-7 w-7" />
+      </div>
+      <h3 className="mt-4 text-lg font-semibold text-navy-900 dark:text-white">{title}</h3>
+      <p className="mt-2 text-sm text-navy-600 dark:text-navy-200">{message}</p>
     </div>
   );
 };

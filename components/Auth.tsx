@@ -56,7 +56,7 @@ const Auth: React.FC = () => {
     e.preventDefault();
     setMessage('');
     setIsError(false);
-    
+
     if (!selectedTeamId) {
       setIsError(true);
       setMessage('Please select a team to join.');
@@ -75,124 +75,125 @@ const Auth: React.FC = () => {
         },
       });
       if (error) throw error;
-      
+
       setIsError(false);
       setMessage('Registration successful! Please check your email to confirm your account.');
     } catch (error: any) {
       setIsError(true);
-       if (error.message === 'Database error saving new user') {
-         setMessage('An internal database error occurred during signup. This is often caused by an incomplete database setup. Please run the latest SQL setup script in your Supabase project.');
-       } else if (error.message.includes('User already registered')) {
-         setMessage('A user with this email already exists. Please use the Sign In button.');
+      if (error.message === 'Database error saving new user') {
+        setMessage('An internal database error occurred during signup. Please run the latest SQL setup script.');
+      } else if (error.message.includes('User already registered')) {
+        setMessage('A user with this email already exists. Please use the Sign In button.');
       } else {
-         setMessage(error.error_description || error.message);
+        setMessage(error.error_description || error.message);
       }
     } finally {
       setLoading(false);
     }
   };
-  
+
   const MessageDisplay = () => {
-      if (!message) return null;
-      const Icon = isError ? XCircleIcon : CheckCircleIcon;
-      return (
-        <div className={`p-4 rounded-md text-sm flex items-start ${isError ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200' : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'}`}>
-            <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-            <span>{message}</span>
+    if (!message) return null;
+    const Icon = isError ? XCircleIcon : CheckCircleIcon;
+    return (
+      <div className={`glass-panel p-4 text-sm ${isError ? 'border-red-200/60 bg-red-50/60 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200' : 'border-green-200/60 bg-green-50/60 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'}`}>
+        <div className="flex items-start gap-3">
+          <Icon className="h-5 w-5 flex-shrink-0" />
+          <span>{message}</span>
         </div>
-      );
-  }
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-navy-50 dark:bg-navy-950 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="flex justify-center">
-             <UsaceLogoIcon className="h-12 w-auto text-usace-red" />
+    <div className="relative min-h-screen">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/70 via-white/30 to-navy-100/30 dark:from-navy-950 dark:via-navy-950/80 dark:to-navy-900" />
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
+        <div className="glass-panel w-full max-w-md space-y-8 md:p-10">
+          <div className="text-center space-y-4">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-usace-red/20 to-usace-blue/20 text-usace-blue">
+              <UsaceLogoIcon className="h-8 w-8" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">USACE PAO KPI Tracker</h2>
+              <p className="text-sm text-navy-600 dark:text-navy-200">
+                {mode === 'signIn' ? 'Sign in to your account' : 'Create a new account'}
+              </p>
+            </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            USACE PAO KPI Tracker
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-navy-300">
-            {mode === 'signIn' ? 'Sign in to your account' : 'Create a new account'}
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={mode === 'signIn' ? handleLogin : handleSignup}>
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-800 placeholder-gray-500 dark:placeholder-navy-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-usace-blue focus:border-usace-blue focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-800 placeholder-gray-500 dark:placeholder-navy-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-usace-blue focus:border-usace-blue focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-             {mode === 'signUp' && (
-              <div>
-                <label htmlFor="team" className="sr-only">Team</label>
-                <select 
-                  id="team" 
-                  value={selectedTeamId} 
-                  onChange={(e) => setSelectedTeamId(e.target.value)} 
-                  required 
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-usace-blue focus:border-usace-blue focus:z-10 sm:text-sm"
-                >
-                  {teams.length === 0 ? (
-                    <option disabled>{message ? '' : 'Loading teams...'}</option>
-                  ) : (
-                    teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)
-                  )}
-                </select>
+          <form className="space-y-5" onSubmit={mode === 'signIn' ? handleLogin : handleSignup}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email-address" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Email address</label>
+                <input
+                  id="email-address"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="input-modern"
+                  placeholder="name@usace.army.mil"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
-            )}
-          </div>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Password</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
+                  required
+                  className="input-modern"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              {mode === 'signUp' && (
+                <div className="space-y-2">
+                  <label htmlFor="team" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Team</label>
+                  <select
+                    id="team"
+                    value={selectedTeamId}
+                    onChange={(e) => setSelectedTeamId(e.target.value)}
+                    required
+                    className="input-modern"
+                  >
+                    {teams.length === 0 ? (
+                      <option disabled>{message ? '' : 'Loading teams...'}</option>
+                    ) : (
+                      teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)
+                    )}
+                  </select>
+                </div>
+              )}
+            </div>
 
-          <MessageDisplay />
+            <MessageDisplay />
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-usace-blue hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-usace-blue disabled:bg-navy-400 disabled:opacity-75 transition-colors"
-            >
-              {loading ? 'Processing...' : (mode === 'signIn' ? 'Sign In' : 'Create Account')}
-            </button>
-          </div>
-        </form>
-         <p className="mt-2 text-center text-sm text-gray-600 dark:text-navy-300">
-            {mode === 'signIn' ? "Don't have an account? " : "Already have an account? "}
-            <button
-                type="button"
-                onClick={() => {
+            <div className="space-y-3">
+              <button type="submit" disabled={loading} className="surface-button w-full justify-center text-base">
+                {loading ? 'Processing…' : mode === 'signIn' ? 'Sign in' : 'Create account'}
+              </button>
+              <p className="text-center text-sm text-navy-600 dark:text-navy-200">
+                {mode === 'signIn' ? "Don't have an account? " : "Already have an account? "}
+                <button
+                  type="button"
+                  onClick={() => {
                     setMode(mode === 'signIn' ? 'signUp' : 'signIn');
                     setMessage('');
                     setIsError(false);
-                }}
-                className="font-medium text-usace-blue hover:text-usace-red focus:outline-none"
-            >
-                {mode === 'signIn' ? 'Sign Up' : 'Sign In'}
-            </button>
-        </p>
+                  }}
+                  className="font-semibold text-usace-blue hover:text-usace-red"
+                >
+                  {mode === 'signIn' ? 'Sign up' : 'Sign in'}
+                </button>
+              </p>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

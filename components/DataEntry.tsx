@@ -70,65 +70,73 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-md dark:shadow-2xl dark:shadow-navy-950/50 max-w-3xl mx-auto">
+    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Add New KPI Entry</h2>
+    <div className="glass-panel max-w-3xl space-y-6 md:p-10">
+      <div>
+        <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Data capture</span>
+        <h2 className="mt-2 text-3xl font-semibold text-navy-900 dark:text-white">Add new KPI entry</h2>
+        <p className="mt-3 text-sm text-navy-600 dark:text-navy-200">
+          Log performance activity with richer context to keep leadership aligned across campaigns.
+        </p>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Date</label>
-                <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm"/>
-            </div>
-             <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Type</label>
-                <select id="type" value={type} onChange={e => setType(e.target.value as EntryType)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm">
-                    {ENTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-            </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Date
+            <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className="input-modern" />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Type
+            <select id="type" value={type} onChange={e => setType(e.target.value as EntryType)} required className="input-modern">
+              {ENTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </label>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <label htmlFor="metric" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Metric</label>
-                <select id="metric" value={metric} onChange={handleMetricChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm">
-                    {availableMetrics.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-            </div>
-            <div>
-                <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Quantity</label>
-                <input type="number" step="any" id="quantity" value={quantity} onChange={e => setQuantity(e.target.value)} required placeholder="e.g., 152" className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm"/>
-            </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Metric
+            <select id="metric" value={metric} onChange={handleMetricChange} required className="input-modern">
+              {availableMetrics.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Quantity
+            <input type="number" step="any" id="quantity" value={quantity} onChange={e => setQuantity(e.target.value)} required placeholder="e.g., 152" className="input-modern" />
+          </label>
         </div>
 
         {metric === 'Other' && (
-             <div>
-                <label htmlFor="custom-metric" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Custom Metric</label>
-                <input type="text" id="custom-metric" value={customMetric} onChange={e => setCustomMetric(e.target.value)} required placeholder="Specify your metric" className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm"/>
-            </div>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Custom metric
+            <input type="text" id="custom-metric" value={customMetric} onChange={e => setCustomMetric(e.target.value)} required placeholder="Specify your metric" className="input-modern" />
+          </label>
         )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div>
-                <label htmlFor="campaign" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Campaign (Optional)</label>
-                <select id="campaign" value={campaignId} onChange={e => setCampaignId(e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm">
-                    <option value="">None</option>
-                    {activeCampaigns.map(campaign => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
-                </select>
-            </div>
-             <div>
-                <label htmlFor="link" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Link (Optional)</label>
-                <input type="url" id="link" value={link} onChange={e => setLink(e.target.value)} placeholder="https://example.com" className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm"/>
-            </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Campaign (optional)
+            <select id="campaign" value={campaignId} onChange={e => setCampaignId(e.target.value)} className="input-modern">
+              <option value="">None</option>
+              {activeCampaigns.map(campaign => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
+            </select>
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+            Link (optional)
+            <input type="url" id="link" value={link} onChange={e => setLink(e.target.value)} placeholder="https://example.com" className="input-modern" />
+          </label>
         </div>
 
-        <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-navy-300">Notes (Optional)</label>
-            <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border-gray-300 dark:border-navy-600 bg-white dark:bg-navy-700 text-gray-900 dark:text-white shadow-sm focus:border-usace-blue focus:ring-usace-blue sm:text-sm"/>
-        </div>
+        <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
+          Notes (optional)
+          <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="textarea-modern" />
+        </label>
 
         <div className="flex justify-end">
-            <button type="submit" className="inline-flex justify-center rounded-md border border-transparent bg-usace-blue py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 dark:focus:ring-offset-navy-800 transition-colors">
-                Save Entry
-            </button>
+          <button type="submit" className="surface-button">
+            Save entry
+          </button>
         </div>
       </form>
     </div>
