@@ -9,16 +9,16 @@ interface DataEntryProps {
 }
 
 const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [type, setType] = useState<EntryType>(EntryType.OUTPUT);
   const [metric, setMetric] = useState('');
   const [customMetric, setCustomMetric] = useState('');
   const [quantity, setQuantity] = useState('');
   const [link, setLink] = useState('');
   const [notes, setNotes] = useState('');
-  const [campaignId, setCampaignId] = useState<string>('');
+  const [campaignId, setCampaignId] = useState('');
   const { showToast } = useNotification();
-  
+
   const availableMetrics = useMemo(() => METRIC_OPTIONS[type] || [], [type]);
 
   useEffect(() => {
@@ -27,29 +27,30 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
     } else {
       setMetric('');
     }
-  }, [type, availableMetrics]);
-
+  }, [availableMetrics]);
 
   const activeCampaigns = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]; // Get current date in "YYYY-MM-DD" format
-    return campaigns.filter(campaign => campaign.end_date >= today);
+    const today = new Date().toISOString().split('T')[0];
+    return campaigns.filter((campaign) => campaign.end_date >= today);
   }, [campaigns]);
-  
-  const handleMetricChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newMetric = e.target.value;
+
+  const handleMetricChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMetric = event.target.value;
     setMetric(newMetric);
     if (newMetric !== 'Other') {
-        setCustomMetric('');
+      setCustomMetric('');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     const finalMetric = metric === 'Other' ? customMetric : metric;
+
     if (!date || !type || !finalMetric || !quantity) {
-        showToast('Please fill all required fields', 'error');
-        return;
+      showToast('Please fill all required fields', 'error');
+      return;
     }
+
     onSubmit({
       date,
       type,
@@ -59,7 +60,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
       campaign_id: campaignId ? parseInt(campaignId, 10) : undefined,
       link: link || undefined,
     });
-    // Reset form
+
     setType(EntryType.OUTPUT);
     setMetric(METRIC_OPTIONS[EntryType.OUTPUT][0]);
     setCustomMetric('');
@@ -70,8 +71,6 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">Add New KPI Entry</h2>
     <div className="glass-panel max-w-3xl space-y-6 md:p-10">
       <div>
         <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Data capture</span>
@@ -84,12 +83,29 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Date
-            <input type="date" id="date" value={date} onChange={e => setDate(e.target.value)} required className="input-modern" />
+            <input
+              type="date"
+              id="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              required
+              className="input-modern"
+            />
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Type
-            <select id="type" value={type} onChange={e => setType(e.target.value as EntryType)} required className="input-modern">
-              {ENTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            <select
+              id="type"
+              value={type}
+              onChange={(event) => setType(event.target.value as EntryType)}
+              required
+              className="input-modern"
+            >
+              {ENTRY_TYPES.map((entryType) => (
+                <option key={entryType} value={entryType}>
+                  {entryType}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -98,39 +114,77 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Metric
             <select id="metric" value={metric} onChange={handleMetricChange} required className="input-modern">
-              {availableMetrics.map(m => <option key={m} value={m}>{m}</option>)}
+              {availableMetrics.map((metricOption) => (
+                <option key={metricOption} value={metricOption}>
+                  {metricOption}
+                </option>
+              ))}
             </select>
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Quantity
-            <input type="number" step="any" id="quantity" value={quantity} onChange={e => setQuantity(e.target.value)} required placeholder="e.g., 152" className="input-modern" />
+            <input
+              type="number"
+              step="any"
+              id="quantity"
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              required
+              placeholder="e.g., 152"
+              className="input-modern"
+            />
           </label>
         </div>
 
         {metric === 'Other' && (
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Custom metric
-            <input type="text" id="custom-metric" value={customMetric} onChange={e => setCustomMetric(e.target.value)} required placeholder="Specify your metric" className="input-modern" />
+            <input
+              type="text"
+              id="custom-metric"
+              value={customMetric}
+              onChange={(event) => setCustomMetric(event.target.value)}
+              required
+              placeholder="Specify your metric"
+              className="input-modern"
+            />
           </label>
         )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Campaign (optional)
-            <select id="campaign" value={campaignId} onChange={e => setCampaignId(e.target.value)} className="input-modern">
+            <select id="campaign" value={campaignId} onChange={(event) => setCampaignId(event.target.value)} className="input-modern">
               <option value="">None</option>
-              {activeCampaigns.map(campaign => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
+              {activeCampaigns.map((campaign) => (
+                <option key={campaign.id} value={campaign.id}>
+                  {campaign.name}
+                </option>
+              ))}
             </select>
           </label>
           <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
             Link (optional)
-            <input type="url" id="link" value={link} onChange={e => setLink(e.target.value)} placeholder="https://example.com" className="input-modern" />
+            <input
+              type="url"
+              id="link"
+              value={link}
+              onChange={(event) => setLink(event.target.value)}
+              placeholder="https://example.com"
+              className="input-modern"
+            />
           </label>
         </div>
 
         <label className="flex flex-col gap-2 text-sm font-semibold text-navy-600 dark:text-navy-200">
           Notes (optional)
-          <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="textarea-modern" />
+          <textarea
+            id="notes"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={3}
+            className="textarea-modern"
+          />
         </label>
 
         <div className="flex justify-end">

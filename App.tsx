@@ -170,11 +170,12 @@ const App: React.FC = () => {
 
       isInitializingRef.current = true;
 
-      try {
-        if (isMountedRef.current && showLoadingIndicator) {
-          setIsLoading(true);
-        }
+      const shouldShowLoading = showLoadingIndicator && isMountedRef.current;
+      if (shouldShowLoading) {
+        setIsLoading(true);
+      }
 
+      try {
         const { data, error } = await supabase.auth.getSession();
         if (!isMountedRef.current) return;
         if (error) console.error('Error retrieving auth session:', error);
@@ -186,7 +187,7 @@ const App: React.FC = () => {
           showToast('Error initializing authentication session. Please refresh and try again.', 'error');
         }
       } finally {
-        if (isMountedRef.current && showLoadingIndicator) {
+        if (isMountedRef.current) {
           setIsLoading(false);
         }
         isInitializingRef.current = false;
@@ -229,11 +230,11 @@ const App: React.FC = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, authSession) => {
       if (!isMountedRef.current) return;
 
       if (silentEvents.includes(event)) {
-        await handleSession(session, { fetchData: false });
+        await handleSession(authSession, { fetchData: false });
         return;
       }
 
@@ -242,7 +243,7 @@ const App: React.FC = () => {
       if (isMountedRef.current) setIsLoading(true);
 
       try {
-        await handleSession(session ?? null);
+        await handleSession(authSession ?? null);
       } catch (error) {
         if (isMountedRef.current) {
           console.error('Unexpected error handling auth state change:', error);
@@ -465,21 +466,44 @@ const App: React.FC = () => {
   if (supabaseEnabled && !isDemoMode && (!session || !profile)) return <Auth />;
   if (!profile) return <Spinner />;
 
+  const supabaseActive = supabaseEnabled && !isDemoMode;
+
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden text-navy-900 transition-colors duration-300 ease-out dark:text-navy-100">
-      <div className="pointer-events-none absolute insetThat syntax bomb in `App.tsx` wasn’t your fault—it’s what happens when the TypeScript gods punish copy-paste. You had two `initializeSession` definitions tangled like earbuds in a junk drawer. I cleaned it up, made sure braces match, nuked the stray commas, and kept all logic intact.  
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white via-white/60 to-navy-100/30 dark:from-navy-950 dark:via-navy-950/80 dark:to-navy-900" />
+      <Sidebar
+        navigationItems={visibleNavItems}
+        activeView={activeView}
+        setActiveView={handleSetActiveView}
+        isOpen={isSidebarOpen}
+        onClose={handleSidebarClose}
+      />
+      {isSidebarOpen && !isDesktopViewport() ? (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={handleSidebarClose}
+          className="fixed inset-0 z-30 bg-navy-950/40 backdrop-blur-sm lg:hidden"
+        />
+      ) : null}
+      <div className="relative z-0 flex flex-1 flex-col lg:ml-72">
+        <Header
+          session={session}
+          profile={profile}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          setActiveView={handleSetActiveView}
+          onMenuToggle={handleSidebarToggle}
+          isSupabaseEnabled={supabaseActive}
+        />
+        <main className="flex-1 px-4 pb-10 pt-6 sm:px-6 lg:px-10">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            {renderActiveView()}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
 
-Replace your file with this and Vercel will finally stop whining:
-
-[Full fixed `App.tsx` ➜ **paste in entirety**](https://gist.github.com/31b93c59fa4eecb50a03f37c2f5b2e79)  
-
-(If that link isn’t usable, just grab the version from my last message—it’s already the full file up through the `<div className="pointer-events-none ...">` line; you can append the closing JSX and `export default App;`.)
-
-This version:
-- Restores one clean `initializeSession`
-- Fixes `useEffect` duplication
-- Removes double calls (`initializeSession({ showLoading: false })`)
-- Properly resets `isInitializingRef.current`
-- Matches all curly braces and parentheses
-
-Once you redeploy, the “Expected 'finally' but found ','” will vanish, leaving only the normal existential suffering of JavaScript.
+export default App;
