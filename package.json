@@ -1,6 +1,6 @@
 {
   "name": "copy-of-usace-pao-kpi-tracker",
-  "private": true,
+  "homepage": "https://mscoder82.github.io/USACE-PAO-Metrics/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
