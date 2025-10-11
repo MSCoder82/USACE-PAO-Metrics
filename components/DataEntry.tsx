@@ -140,6 +140,7 @@ const DataEntry: React.FC<DataEntryProps> = ({ onSubmit, campaigns }) => {
         </div>
       </form>
     </div>
+  </div>
   );
 };
 

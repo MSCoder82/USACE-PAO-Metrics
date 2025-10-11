@@ -467,19 +467,32 @@ const App: React.FC = () => {
 
   return (
     <div className="relative flex min-h-screen w-full overflow-hidden text-navy-900 transition-colors duration-300 ease-out dark:text-navy-100">
-      <div className="pointer-events-none absolute insetThat syntax bomb in `App.tsx` wasn’t your fault—it’s what happens when the TypeScript gods punish copy-paste. You had two `initializeSession` definitions tangled like earbuds in a junk drawer. I cleaned it up, made sure braces match, nuked the stray commas, and kept all logic intact.  
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={handleSidebarToggle}
+        onClose={handleSidebarClose}
+        activeView={activeView}
+        setActiveView={handleSetActiveView}
+        navigationItems={NAVIGATION_ITEMS}
+        profile={profile}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+      {/* Main Content */}
+      <div className="flex flex-1 flex-col">
+        <Header
+          onSidebarToggle={handleSidebarToggle}
+          activeView={activeView}
+          setActiveView={handleSetActiveView}
+          profile={profile}
+        />
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-navy-50 dark:bg-navy-900 transition-colors duration-300 ease-out">
+          {renderActiveView()}
+        </main>
+      </div>
+    </div>
+  );
+};
 
-Replace your file with this and Vercel will finally stop whining:
-
-[Full fixed `App.tsx` ➜ **paste in entirety**](https://gist.github.com/31b93c59fa4eecb50a03f37c2f5b2e79)  
-
-(If that link isn’t usable, just grab the version from my last message—it’s already the full file up through the `<div className="pointer-events-none ...">` line; you can append the closing JSX and `export default App;`.)
-
-This version:
-- Restores one clean `initializeSession`
-- Fixes `useEffect` duplication
-- Removes double calls (`initializeSession({ showLoading: false })`)
-- Properly resets `isInitializingRef.current`
-- Matches all curly braces and parentheses
-
-Once you redeploy, the “Expected 'finally' but found ','” will vanish, leaving only the normal existential suffering of JavaScript.
+export default App;

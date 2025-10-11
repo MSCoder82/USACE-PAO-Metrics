@@ -61,43 +61,45 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ session, profile, onProfileUp
     <div className="bg-white dark:bg-navy-800 p-6 md:p-8 rounded-lg shadow-card dark:shadow-card-dark max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-6">My Profile</h2>
       <div className="flex flex-col items-center space-y-4">
-    <div className="glass-panel mx-auto max-w-2xl space-y-8 md:p-10">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Avatar url={profile.avatarUrl} name={session.user.email} size={128} />
-        <div className="space-y-2">
-          <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">{session.user.email}</h2>
-          <p className="text-sm text-navy-600 dark:text-navy-200">{profile.teamName}</p>
+        <div className="glass-panel mx-auto max-w-2xl space-y-8 md:p-10">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <Avatar url={profile.avatarUrl} name={session.user.email} size={128} />
+            <div className="space-y-2">
+              <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">{session.user.email}</h2>
+              <p className="text-sm text-navy-600 dark:text-navy-200">{profile.teamName}</p>
+            </div>
+            <div>
+              <label htmlFor="avatar-upload" className="surface-button">
+                {uploading ? 'Uploading…' : 'Upload new avatar'}
+              </label>
+              <input
+                id="avatar-upload"
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={uploadAvatar}
+                disabled={uploading}
+              />
+            </div>
+          </div>
+          <div className="space-y-4 rounded-2xl border border-white/30 bg-white/40 p-6 text-left dark:border-white/10 dark:bg-white/5">
+            <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Profile details</h3>
+            <dl className="space-y-4 text-sm">
+              <React.Fragment>
+                <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Email address</dt>
+                <dd className="text-navy-800 dark:text-white">{session.user.email}</dd>
+              </React.Fragment>
+              <React.Fragment>
+                <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Team</dt>
+                <dd className="text-navy-800 dark:text-white">{profile.teamName}</dd>
+              </React.Fragment>
+              <React.Fragment>
+                <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Role</dt>
+                <dd className="capitalize text-navy-800 dark:text-white">{profile.role}</dd>
+              </React.Fragment>
+            </dl>
+          </div>
         </div>
-        <div>
-          <label htmlFor="avatar-upload" className="surface-button">
-            {uploading ? 'Uploading…' : 'Upload new avatar'}
-          </label>
-          <input
-            id="avatar-upload"
-            type="file"
-            className="hidden"
-            accept="image/*"
-            onChange={uploadAvatar}
-            disabled={uploading}
-          />
-        </div>
-      </div>
-      <div className="space-y-4 rounded-2xl border border-white/30 bg-white/40 p-6 text-left dark:border-white/10 dark:bg-white/5">
-        <h3 className="text-xl font-semibold text-navy-900 dark:text-white">Profile details</h3>
-        <dl className="space-y-4 text-sm">
-          <div className="flex flex-col gap-1">
-            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Email address</dt>
-            <dd className="text-navy-800 dark:text-white">{session.user.email}</dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Team</dt>
-            <dd className="text-navy-800 dark:text-white">{profile.teamName}</dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Role</dt>
-            <dd className="capitalize text-navy-800 dark:text-white">{profile.role}</dd>
-          </div>
-        </dl>
       </div>
     </div>
   );

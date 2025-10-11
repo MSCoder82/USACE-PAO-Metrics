@@ -139,15 +139,17 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
           <KpiBarChart data={filteredData} />
         </div>
         <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
-           <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Entries by Type</h3>
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="glass-panel">
-          <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Monthly Media Pickups</h3>
-          <KpiBarChart data={filteredData} />
-        </div>
-        <div className="glass-panel">
-           <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Entries by Type</h3>
-          <KpiPieChart data={filteredData} />
+          <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Entries by Type</h3>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="glass-panel">
+              <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Monthly Media Pickups</h3>
+              <KpiBarChart data={filteredData} />
+            </div>
+            <div className="glass-panel">
+              <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Entries by Type</h3>
+              <KpiPieChart data={filteredData} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

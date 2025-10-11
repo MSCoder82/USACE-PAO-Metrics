@@ -121,79 +121,83 @@ const PlanBuilder: React.FC = () => {
             </div>
         </div>
     );
-    
+
     if (isLoading) {
         return (
             <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col items-center justify-center">
                 <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-4">Generating Your Plan...</h2>
                 <p className="text-gray-600 dark:text-navy-300 mb-6">The AI is synthesizing your inputs into a professional document.</p>
-            <div className="glass-panel h-full flex flex-col items-center justify-center space-y-4 text-center">
-                <h2 className="text-2xl font-semibold text-navy-900 dark:text-white">Generating your plan...</h2>
-                <p className="text-sm text-navy-600 dark:text-navy-200">The AI is synthesizing your inputs into a professional document.</p>
-                <div className="flex items-center space-x-2">
-                    <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse [animation-delay:-0.3s]"></div>
-                    <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse [animation-delay:-0.15s]"></div>
-                    <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse"></div>
+                <div className="glass-panel h-full flex flex-col items-center justify-center space-y-4 text-center">
+                    <h2 className="text-2xl font-semibold text-navy-900 dark:text-white">Generating your plan...</h2>
+                    <p className="text-sm text-navy-600 dark:text-navy-200">The AI is synthesizing your inputs into a professional document.</p>
+                    <div className="flex items-center space-x-2">
+                        <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse [animation-delay:-0.3s]"></div>
+                        <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse [animation-delay:-0.15s]"></div>
+                        <div className="h-3 w-3 rounded-full bg-gradient-to-r from-usace-red to-usace-blue animate-pulse"></div>
+                    </div>
                 </div>
             </div>
-        )
+        );
     }
 
     if (currentStep === 12) {
         return (
-             <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col">
+            <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col">
                 <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">Your Communication Plan</h2>
                 <div className="flex-1 overflow-y-auto mb-4 p-4 bg-navy-50 dark:bg-navy-900 rounded-md border border-navy-200 dark:border-navy-700">
-             <div className="glass-panel h-full flex flex-col space-y-6">
-                <div>
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Output</span>
-                    <h2 className="mt-2 text-3xl font-semibold text-navy-900 dark:text-white">Your communication plan</h2>
-                </div>
-                <div className="subtle-scrollbar flex-1 overflow-y-auto rounded-2xl border border-white/30 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">
-                    <RenderMarkdown content={generatedPlan} />
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                    <button onClick={handleStartOver} className="surface-button secondary">Start over</button>
-                    <button onClick={() => navigator.clipboard.writeText(generatedPlan)} className="surface-button">Copy to clipboard</button>
+                    <div className="glass-panel h-full flex flex-col space-y-6">
+                        <div>
+                            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-usace-blue/70 dark:text-navy-200/80">Output</span>
+                            <h2 className="mt-2 text-3xl font-semibold text-navy-900 dark:text-white">Your communication plan</h2>
+                        </div>
+                        <div className="subtle-scrollbar flex-1 overflow-y-auto rounded-2xl border border-white/30 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">
+                            <RenderMarkdown content={generatedPlan} />
+                        </div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                            <button onClick={handleStartOver} className="surface-button secondary">Start over</button>
+                            <button onClick={() => navigator.clipboard.writeText(generatedPlan)} className="surface-button">Copy to clipboard</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        )
+        );
     }
 
     if (currentStep >= 1) {
         return (
             <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col">
-            <div className="glass-panel h-full flex flex-col space-y-6">
-                <ProgressIndicator />
-                <div className="flex-1 space-y-4">
-                    <div>
-                        <h3 className="text-2xl font-semibold text-navy-900 dark:text-white">{STEP_PROMPTS[currentStep].title}</h3>
-                        <p className="mt-2 text-sm text-navy-600 dark:text-navy-200">{STEP_PROMPTS[currentStep].prompt}</p>
+                <div className="glass-panel h-full flex flex-col space-y-6">
+                    <ProgressIndicator />
+                    <div className="flex-1 space-y-4">
+                        <div>
+                            <h3 className="text-2xl font-semibold text-navy-900 dark:text-white">{STEP_PROMPTS[currentStep].title}</h3>
+                            <p className="mt-2 text-sm text-navy-600 dark:text-navy-200">{STEP_PROMPTS[currentStep].prompt}</p>
+                        </div>
+                        <textarea
+                            value={currentInput}
+                            onChange={(e) => setCurrentInput(e.target.value)}
+                            className="textarea-modern h-48 min-h-[10rem] flex-1"
+                            placeholder="Capture your notes here..."
+                        />
                     </div>
-                    <textarea
-                        value={currentInput}
-                        onChange={(e) => setCurrentInput(e.target.value)}
-                        className="textarea-modern h-48 min-h-[10rem] flex-1"
-                        placeholder="Capture your notes here..."
-                    />
-                </div>
-                <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-between">
-                    <button onClick={handlePrevious} disabled={currentStep <= 1} className="surface-button secondary disabled:cursor-not-allowed disabled:opacity-50">Previous</button>
-                    {currentStep < 10 ? (
-                        <button onClick={handleNext} className="surface-button">Next step</button>
-                    ) : (
-                         <button onClick={handleGeneratePlan} className="surface-button">
-                            <SparklesIcon className="h-5 w-5" />
-                            <span>Generate plan</span>
-                        </button>
-                    )}
+                    <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-between">
+                        <button onClick={handlePrevious} disabled={currentStep <= 1} className="surface-button secondary disabled:cursor-not-allowed disabled:opacity-50">Previous</button>
+                        {currentStep < 10 ? (
+                            <button onClick={handleNext} className="surface-button">Next step</button>
+                        ) : (
+                            <button onClick={handleGeneratePlan} className="surface-button">
+                                <SparklesIcon className="h-5 w-5" />
+                                <span>Generate plan</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
-        )
+        );
     }
 
     return (
-         <div className="bg-white dark:bg-navy-800 p-8 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-navy-800 p-8 rounded-lg shadow-card dark:shadow-card-dark h-full flex flex-col items-center justify-center text-center">
             <SparklesIcon className="w-16 h-16 text-usace-blue mb-4" />
             <h2 className="text-3xl font-bold text-navy-900 dark:text-white mb-4">AI Communication Plan Builder</h2>
             <p className="max-w-xl text-gray-600 dark:text-navy-300 mb-8">
@@ -202,17 +206,18 @@ const PlanBuilder: React.FC = () => {
             <button onClick={handleStart} className="inline-flex justify-center rounded-md border border-transparent bg-usace-blue py-3 px-6 text-base font-medium text-white shadow-sm hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-usace-blue focus:ring-offset-2 dark:focus:ring-offset-navy-800 transition-colors">
                 Let's Get Started
             </button>
-         <div className="glass-panel h-full flex flex-col items-center justify-center space-y-6 text-center">
-            <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-usace-red/20 to-usace-blue/20 text-usace-blue">
-                <SparklesIcon className="h-10 w-10" />
-            </span>
-            <div className="space-y-4">
-                <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">AI Communication Plan Builder</h2>
-                <p className="max-w-xl text-sm text-navy-600 dark:text-navy-200">
-                    Build a comprehensive 10-step USACE communication plan with guided prompts. Capture your insights and let the assistant assemble a polished narrative.
-                </p>
+            <div className="glass-panel h-full flex flex-col items-center justify-center space-y-6 text-center">
+                <span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-usace-red/20 to-usace-blue/20 text-usace-blue">
+                    <SparklesIcon className="h-10 w-10" />
+                </span>
+                <div className="space-y-4">
+                    <h2 className="text-3xl font-semibold text-navy-900 dark:text-white">AI Communication Plan Builder</h2>
+                    <p className="max-w-xl text-sm text-navy-600 dark:text-navy-200">
+                        Build a comprehensive 10-step USACE communication plan with guided prompts. Capture your insights and let the assistant assemble a polished narrative.
+                    </p>
+                </div>
+                <button onClick={handleStart} className="surface-button text-base px-8 py-3">Let's get started</button>
             </div>
-            <button onClick={handleStart} className="surface-button text-base px-8 py-3">Let's get started</button>
         </div>
     );
 };
