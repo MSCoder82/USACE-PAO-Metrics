@@ -4,7 +4,6 @@ import KpiCard from './KpiCard';
 import KpiBarChart from './KpiBarChart';
 import KpiPieChart from './KpiPieChart';
 import GoalProgress from './GoalProgress';
-// Fix: Removed unused UsersIcon and kept VideoCameraIcon, which is now implemented and used.
 import { PresentationChartBarIcon, ChartPieIcon, GlobeAltIcon, VideoCameraIcon, TrophyIcon } from './Icons';
 
 interface DashboardProps {
@@ -20,21 +19,20 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
     if (selectedCampaignId === 'all') {
       return data;
     }
-    return data.filter(d => d.campaign_id === selectedCampaignId);
+    return data.filter((item) => item.campaign_id === selectedCampaignId);
   }, [data, selectedCampaignId]);
 
   const getLatestValue = (metric: string) => {
     const sortedData = filteredData
-      .filter(d => d.metric === metric)
+      .filter((item) => item.metric === metric)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return sortedData.length > 0 ? sortedData[0] : null;
   };
 
-  const calculateTotal = (metric: string) => {
-    return filteredData
-        .filter(d => d.metric === metric)
-        .reduce((sum, item) => sum + item.quantity, 0);
-  }
+  const calculateTotal = (metric: string) =>
+    filteredData
+      .filter((item) => item.metric === metric)
+      .reduce((sum, item) => sum + item.quantity, 0);
 
   const mediaPickupsLatest = getLatestValue('Media pickups');
   const engagementLatest = getLatestValue('Engagement rate');
@@ -44,19 +42,20 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
   const activeGoals = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const allActiveGoals = goals.filter(goal => {
-        const startDate = new Date(goal.start_date);
-        const endDate = new Date(goal.end_date);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
-        return startDate <= today && endDate >= today;
+
+    const goalsInRange = goals.filter((goal) => {
+      const startDate = new Date(goal.start_date);
+      const endDate = new Date(goal.end_date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+      return startDate <= today && endDate >= today;
     });
 
     if (selectedCampaignId === 'all') {
-      return allActiveGoals;
+      return goalsInRange;
     }
-    
-    return allActiveGoals.filter(goal => goal.campaign_id === selectedCampaignId);
+
+    return goalsInRange.filter((goal) => goal.campaign_id === selectedCampaignId);
   }, [goals, selectedCampaignId]);
 
   const getGoalProgress = (goal: KpiGoal) => {
@@ -64,19 +63,20 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
     const goalEndDate = new Date(goal.end_date);
 
     return filteredData
-        .filter(d => {
-            const itemDate = new Date(d.date);
-            return d.metric === goal.metric && itemDate >= goalStartDate && itemDate <= goalEndDate;
-        })
-        .reduce((sum, item) => sum + item.quantity, 0);
+      .filter((item) => {
+        const itemDate = new Date(item.date);
+        return item.metric === goal.metric && itemDate >= goalStartDate && itemDate <= goalEndDate;
+      })
+      .reduce((sum, item) => sum + item.quantity, 0);
   };
-
 
   return (
     <div className="space-y-8">
       <div className="glass-panel flex flex-wrap items-center justify-between gap-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-usace-blue/80 dark:text-navy-200/80">Mission Control</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-usace-blue/80 dark:text-navy-200/80">
+            Mission Control
+          </p>
           <h2 className="text-3xl font-bold tracking-tight text-navy-900 dark:text-white">PAO Performance Dashboard</h2>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -86,22 +86,44 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
           <select
             id="campaign-filter"
             value={selectedCampaignId}
-            onChange={(e) => setSelectedCampaignId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            onChange={(event) => setSelectedCampaignId(event.target.value === 'all' ? 'all' : Number(event.target.value))}
             className="input-modern w-48"
           >
             <option value="all">All Campaigns</option>
-            {campaigns.map(campaign => (
-              <option key={campaign.id} value={campaign.id}>{campaign.name}</option>
+            {campaigns.map((campaign) => (
+              <option key={campaign.id} value={campaign.id}>
+                {campaign.name}
+              </option>
             ))}
           </select>
         </div>
       </div>
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <KpiCard title="Media Pickups (Latest)" value={mediaPickupsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="pickups" icon={PresentationChartBarIcon} />
-        <KpiCard title="Social Engagement (Latest)" value={engagementLatest?.quantity.toLocaleString() ?? 'N/A'} unit="%" icon={ChartPieIcon}/>
-        <KpiCard title="News Releases (Total)" value={pressReleasesTotal.toLocaleString() ?? 'N/A'} unit="releases" icon={GlobeAltIcon}/>
-        {/* Fix: Used the more appropriate VideoCameraIcon for the Video Views card. */}
-        <KpiCard title="Video Views (Latest)" value={videoViewsLatest?.quantity.toLocaleString() ?? 'N/A'} unit="views" icon={VideoCameraIcon}/>
+        <KpiCard
+          title="Media Pickups (Latest)"
+          value={mediaPickupsLatest?.quantity.toLocaleString() ?? 'N/A'}
+          unit="pickups"
+          icon={PresentationChartBarIcon}
+        />
+        <KpiCard
+          title="Social Engagement (Latest)"
+          value={engagementLatest?.quantity.toLocaleString() ?? 'N/A'}
+          unit="%"
+          icon={ChartPieIcon}
+        />
+        <KpiCard
+          title="News Releases (Total)"
+          value={pressReleasesTotal.toLocaleString() ?? 'N/A'}
+          unit="releases"
+          icon={GlobeAltIcon}
+        />
+        <KpiCard
+          title="Video Views (Latest)"
+          value={videoViewsLatest?.quantity.toLocaleString() ?? 'N/A'}
+          unit="views"
+          icon={VideoCameraIcon}
+        />
       </div>
 
       {activeGoals.length > 0 && (
@@ -113,11 +135,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
             <h3 className="text-2xl font-semibold text-navy-900 dark:text-white">Active Goals</h3>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            {activeGoals.map(goal => {
+            {activeGoals.map((goal) => {
               const currentValue = getGoalProgress(goal);
-              const campaignName = goal.campaign_id
-                ? campaigns.find(c => c.id === goal.campaign_id)?.name
-                : undefined;
+              const campaignName = goal.campaign_id ? campaigns.find((campaign) => campaign.id === goal.campaign_id)?.name : undefined;
               return (
                 <GoalProgress
                   key={goal.id}
@@ -133,20 +153,13 @@ const Dashboard: React.FC<DashboardProps> = ({ data, campaigns, goals }) => {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
-          <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Monthly Media Pickups</h3>
-          <KpiBarChart data={filteredData} />
-        </div>
-        <div className="bg-white dark:bg-navy-800 p-6 rounded-lg shadow-card dark:shadow-card-dark">
-           <h3 className="text-lg font-semibold text-navy-800 dark:text-white mb-4">Entries by Type</h3>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="glass-panel">
           <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Monthly Media Pickups</h3>
           <KpiBarChart data={filteredData} />
         </div>
         <div className="glass-panel">
-           <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Entries by Type</h3>
+          <h3 className="mb-4 text-lg font-semibold text-navy-900 dark:text-white">Entries by Type</h3>
           <KpiPieChart data={filteredData} />
         </div>
       </div>
