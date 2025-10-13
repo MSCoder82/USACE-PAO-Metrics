@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { UsaceLogoIcon, CheckCircleIcon, XCircleIcon } from './Icons';
 import { Team } from '../types';
 
-const Auth: React.FC = () => {
+type AuthMode = 'signIn' | 'signUp';
+
+type AuthProps = {
+  initialMode?: AuthMode;
+};
+
+const Auth: React.FC<AuthProps> = ({ initialMode = 'signIn' }) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn');
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
+
+  useEffect(() => {
+    setMode(initialMode);
+    setMessage('');
+    setIsError(false);
+  }, [initialMode]);
 
   useEffect(() => {
     if (mode === 'signUp') {
@@ -25,6 +39,8 @@ const Auth: React.FC = () => {
           } else {
             setMessage('Could not load teams for registration.');
           }
+          setTeams([]);
+          setSelectedTeamId('');
         } else {
           setTeams(data);
           if (data.length > 0) {
@@ -32,7 +48,10 @@ const Auth: React.FC = () => {
           }
         }
       };
-      fetchTeams();
+      void fetchTeams();
+    } else {
+      setTeams([]);
+      setSelectedTeamId('');
     }
   }, [mode]);
 
@@ -82,7 +101,7 @@ const Auth: React.FC = () => {
       setIsError(true);
       if (error.message === 'Database error saving new user') {
         setMessage('An internal database error occurred during signup. Please run the latest SQL setup script.');
-      } else if (error.message.includes('User already registered')) {
+      } else if (error.message?.includes('User already registered')) {
         setMessage('A user with this email already exists. Please use the Sign In button.');
       } else {
         setMessage(error.error_description || error.message);
@@ -96,13 +115,32 @@ const Auth: React.FC = () => {
     if (!message) return null;
     const Icon = isError ? XCircleIcon : CheckCircleIcon;
     return (
-      <div className={`glass-panel p-4 text-sm ${isError ? 'border-red-200/60 bg-red-50/60 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200' : 'border-green-200/60 bg-green-50/60 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'}`}>
+      <div
+        className={`glass-panel p-4 text-sm ${
+          isError
+            ? 'border-red-200/60 bg-red-50/60 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200'
+            : 'border-green-200/60 bg-green-50/60 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-200'
+        }`}
+      >
         <div className="flex items-start gap-3">
           <Icon className="h-5 w-5 flex-shrink-0" />
           <span>{message}</span>
         </div>
       </div>
     );
+  };
+
+  const toggleMode = () => {
+    const nextMode: AuthMode = mode === 'signIn' ? 'signUp' : 'signIn';
+    setMode(nextMode);
+    setMessage('');
+    setIsError(false);
+    setPassword('');
+    if (nextMode === 'signIn') {
+      navigate('/login', { replace: true });
+    } else {
+      navigate('/register', { replace: true });
+    }
   };
 
   return (
@@ -124,7 +162,9 @@ const Auth: React.FC = () => {
           <form className="space-y-5" onSubmit={mode === 'signIn' ? handleLogin : handleSignup}>
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="email-address" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Email address</label>
+                <label htmlFor="email-address" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">
+                  Email address
+                </label>
                 <input
                   id="email-address"
                   name="email"
@@ -138,7 +178,9 @@ const Auth: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Password</label>
+                <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">
+                  Password
+                </label>
                 <input
                   id="password"
                   name="password"
@@ -153,7 +195,9 @@ const Auth: React.FC = () => {
               </div>
               {mode === 'signUp' && (
                 <div className="space-y-2">
-                  <label htmlFor="team" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">Team</label>
+                  <label htmlFor="team" className="text-xs font-semibold uppercase tracking-wide text-navy-500 dark:text-navy-200">
+                    Team
+                  </label>
                   <select
                     id="team"
                     value={selectedTeamId}
@@ -164,7 +208,11 @@ const Auth: React.FC = () => {
                     {teams.length === 0 ? (
                       <option disabled>{message ? '' : 'Loading teams...'}</option>
                     ) : (
-                      teams.map(team => <option key={team.id} value={team.id}>{team.name}</option>)
+                      teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))
                     )}
                   </select>
                 </div>
@@ -178,14 +226,10 @@ const Auth: React.FC = () => {
                 {loading ? 'Processing…' : mode === 'signIn' ? 'Sign in' : 'Create account'}
               </button>
               <p className="text-center text-sm text-navy-600 dark:text-navy-200">
-                {mode === 'signIn' ? "Don't have an account? " : "Already have an account? "}
+                {mode === 'signIn' ? "Don't have an account? " : 'Already have an account? '}
                 <button
                   type="button"
-                  onClick={() => {
-                    setMode(mode === 'signIn' ? 'signUp' : 'signIn');
-                    setMessage('');
-                    setIsError(false);
-                  }}
+                  onClick={toggleMode}
                   className="font-semibold text-usace-blue hover:text-usace-red"
                 >
                   {mode === 'signIn' ? 'Sign up' : 'Sign in'}
