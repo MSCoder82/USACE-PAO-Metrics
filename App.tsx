@@ -4,9 +4,15 @@ import Protected from "./routes/Protected";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 
+const basename = (() => {
+  const baseUrl = import.meta.env.BASE_URL ?? '/';
+  const normalised = baseUrl.replace(/\/+$/, '');
+  return normalised === '' ? undefined : normalised;
+})();
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <AuthProvider>
         <Routes>
           <Route element={<Protected />}>

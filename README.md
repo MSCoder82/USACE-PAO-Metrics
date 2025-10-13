@@ -15,6 +15,9 @@ View your app in AI Studio: https://ai.studio/apps/drive/127lMsmTeRfjILXt4DazqfQ
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key.
+   - Deployments that serve the site from a sub-path can optionally set `VITE_BASE_PATH`
+     (for example `/my-site`) to ensure asset URLs are generated correctly. Leave it unset
+     when deploying to the root domain so the app loads normally.
 3. Run the app:
    `npm run dev`
