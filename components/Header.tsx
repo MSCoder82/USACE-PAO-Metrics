@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
+import { signOut as firebaseSignOut } from 'firebase/auth';
 import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
 import ThemeToggle from './ThemeToggle';
 import Avatar from './Avatar';
 import { Profile, View } from '../types';
@@ -27,9 +30,24 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await firebaseSignOut(auth);
+    } catch (error) {
+      console.error('Firebase sign-out failed', error);
+    }
+
+    if (isSupabaseEnabled) {
+      try {
+        await supabase.auth.signOut();
+      } catch (error) {
+        console.error('Supabase sign-out failed', error);
+      }
+    }
+
+    navigate('/login', { replace: true });
   }
 
   const showAccountMenu = Boolean(session && isSupabaseEnabled);
