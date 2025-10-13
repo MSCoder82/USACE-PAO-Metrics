@@ -1,23 +1,77 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase, isSupabaseConfigured, supabaseConfigurationError } from "../lib/supabase";
 
-type AuthCtx = { user: User | null; loading: boolean };
-const Ctx = createContext<AuthCtx>({ user: null, loading: true });
+interface AuthContextValue {
+  session: Session | null;
+  loading: boolean;
+  supabaseEnabled: boolean;
+}
 
-export const useAuth = () => useContext(Ctx);
+const AuthContext = createContext<AuthContextValue>({
+  session: null,
+  loading: true,
+  supabaseEnabled: false,
+});
+
+export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const supabaseEnabled = isSupabaseConfigured && supabaseConfigurationError === null;
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(supabaseEnabled);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u ?? null);
+    let isMounted = true;
+
+    if (!supabaseEnabled) {
+      setSession(null);
+      setLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const loadSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (!isMounted) return;
+        if (error) {
+          console.error("Failed to retrieve Supabase session", error);
+        }
+        setSession(data?.session ?? null);
+      } catch (error) {
+        if (isMounted) {
+          console.error("Unexpected error while retrieving Supabase session", error);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    setLoading(true);
+    void loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!isMounted) return;
+      setSession(newSession ?? null);
       setLoading(false);
     });
-    return () => unsub();
-  }, []);
 
-  return <Ctx.Provider value={{ user, loading }}>{children}</Ctx.Provider>;
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabaseEnabled]);
+
+  const value = useMemo(
+    () => ({ session, loading, supabaseEnabled }),
+    [session, loading, supabaseEnabled],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

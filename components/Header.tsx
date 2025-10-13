@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
-import { signOut as firebaseSignOut } from 'firebase/auth';
 import { supabase } from '../lib/supabase';
-import { auth } from '../lib/firebase';
 import ThemeToggle from './ThemeToggle';
 import Avatar from './Avatar';
 import { Profile, View } from '../types';
@@ -33,12 +31,6 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-    } catch (error) {
-      console.error('Firebase sign-out failed', error);
-    }
-
     if (isSupabaseEnabled) {
       try {
         await supabase.auth.signOut();
@@ -48,7 +40,7 @@ const Header: React.FC<HeaderProps> = ({
     }
 
     navigate('/login', { replace: true });
-  }
+  };
 
   const showAccountMenu = Boolean(session && isSupabaseEnabled);
   const primaryLabel = session?.user?.email ?? profile?.teamName ?? 'USACE Public Affairs';
